@@ -12,6 +12,7 @@ from .chains.slide_maker import HtmlSlide, create_slide_maker_chain
 from .chains.slide_to_script import ScriptList, create_slide_to_script_chain
 from .chains.tts import create_tts_chain
 from .models import MovieConfig
+from .media import remove_long_silence
 from .slide_player import PlayConfig, play_slide
 
 
@@ -61,6 +62,8 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
         if not audio_file.exists():
             audio = tts.invoke(script.script)
             audio.stream_to_file(audio_file)
+            removed_silence_audio = remove_long_silence(AudioSegment.from_mp3(audio_file))
+            removed_silence_audio.export(audio_file, format="mp3")
         else:
             logger.info(f"Loading audio from {audio_file}")
         audio_files.append(audio_file)
