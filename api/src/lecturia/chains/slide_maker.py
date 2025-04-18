@@ -10,19 +10,23 @@ class HtmlSlide(BaseModel):
 
 
 _prompt_template = """
-* スライドはhtml形式で作成してください。
+## スライドの作成ルール
+* スライドは1ファイルのhtml形式で作成してください。
 * 各スライドのどこかにページ番号を入れてください。
 * 以下のようにスライド内で発生するイベントトリガの入力キーを分けてください。
   * スライドのページ送りは"→"キーでのみできるようにしてください。
   * より分かりやすいスライドにするためにアニメーションの挿入も検討してください。アニメーションの実行トリガは"Enter"キーでのみできるようにしてください。
-お題: {topic}
+* 数学的なアニメーションはスライド内に`<canvas>`や`<svg>`を挿入し、MathBoxなどを使用して作成してください。
+
+## スライドの内容
+タイトル: {topic}
 {detail}
 """
 
 def create_slide_maker_chain() -> Runnable:
     prompt_msgs = [
         SystemMessage(
-            content="あなたは講義スライドを作成するプロフェッショナルです。お題に基づいた講義スライドをhtml形式で作成してください。"
+            content="あなたは講義スライドを作成するプロフェッショナルです。タイトルに基づいた講義スライドをhtml形式で作成してください。"
         ),
         HumanMessagePromptTemplate.from_template(_prompt_template),
     ]
