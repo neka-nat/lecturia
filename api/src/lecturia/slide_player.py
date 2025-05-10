@@ -5,23 +5,38 @@ from playwright.async_api import async_playwright
 from pydantic import BaseModel
 from tqdm import tqdm
 
+from .models import Event, EventList
+
 
 class PlayConfig(BaseModel):
     fps: int = 30
-    event_durations_sec: list[tuple[str, float]]
+    events: EventList
     width: int = 1280
     height: int = 720
 
 
 async def play_slide(html_content: str, output_dir: Path, config: PlayConfig) -> list[Path]:
     fps = config.fps
-    event_durations_sec = config.event_durations_sec
+    event_durations_sec: list[tuple[str, float]] = []
+    for prev_event, next_event in zip(
+        [Event(type="start", time_sec=0)] + config.events.events[:-1],
+        config.events.events,
+    ):
+        event_durations_sec.append((next_event.type, next_event.time_sec - prev_event.time_sec))
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(viewport={'width': config.width, 'height': config.height})
         page = await context.new_page()
-        await page.set_content(html_content)
+        player_html_path = Path(__file__).parent.resolve() / "html" / "player.html"
+        await page.goto(player_html_path.as_uri())
+        await page.evaluate("""
+          async (html) => {
+            const blobUrl = URL.createObjectURL(new Blob([html], {type:'text/html'}));
+            const iframe  = document.getElementById('slide');
+            await new Promise(res => { iframe.onload = () => res(); iframe.src = blobUrl; });
+          }
+        """, html_content)
 
         frames: list[Path] = []
         total_frames = int(sum(event_duration for _, event_duration in event_durations_sec) * fps)
@@ -35,8 +50,9 @@ async def play_slide(html_content: str, output_dir: Path, config: PlayConfig) ->
                     pbar.update(1)
 
                 if event_index < len(event_durations_sec) - 1:
-                    await page.keyboard.press("ArrowRight" if event_type == "page" else "Enter")
+                    await page.evaluate("ev => window.playSignal(ev)", {"type": event_type})
                     await asyncio.sleep(0.1)
 
+        await context.close()
         await browser.close()
         return frames

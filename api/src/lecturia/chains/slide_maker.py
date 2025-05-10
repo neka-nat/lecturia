@@ -11,12 +11,31 @@ class HtmlSlide(BaseModel):
 
 _prompt_template = """
 ## スライドの作成ルール
-* スライドは1ファイルのhtml形式で作成してください。
-* 各スライドのどこかにページ番号を入れてください。
-* 以下のようにスライド内で発生するイベントトリガの入力キーを分けてください。
-  * スライドのページ送りは"→"キーでのみできるようにしてください。
-  * より分かりやすいスライドにするためにアニメーションの挿入も検討してください。アニメーションの実行トリガは"Enter"キーでのみできるようにしてください。
-* 数学的なアニメーションはスライド内に`<canvas>`や`<svg>`を挿入し、MathBoxなどを使用して作成してください。
+1. スライドは1ファイルのhtml形式で作成してください。
+2. 各スライドのどこかにページ番号を入れてください。
+3. 以下のようにスライド内で発生するイベントトリガに対してpostMessageで外部から操作できるようにしてください。
+
+| イベントトリガ | 操作 |
+| -------------- | ---- |
+| slide-next     | 次のスライドへ |
+| slide-prev     | 前のスライドへ |
+| slide-step     | アニメーションなどのステップを進める |
+
+scriptとしては以下のようなものを挿入してください。
+```html
+<script>
+  window.addEventListener('message', (ev) => {{
+    switch (ev.data) {{
+      case 'slide-next': nextSlide(); break;
+      case 'slide-prev': prevSlide(); break;
+      case 'slide-step': slideNextStep(); break;
+    }}
+  }});
+</script>
+```
+
+4. 数学的なアニメーションはスライド内に`<canvas>`や`<svg>`を挿入し、MathBoxなどを使用して作成してください。
+
 
 ## スライドの内容
 タイトル: {topic}

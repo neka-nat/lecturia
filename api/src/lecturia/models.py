@@ -1,4 +1,16 @@
+from typing import Literal
+
 from pydantic import BaseModel
+
+
+class Event(BaseModel):
+    type: Literal["start", "pose", "slideNext", "slidePrev", "slideStep", "end"]
+    time_sec: float
+    name: str | None = None
+
+
+class EventList(BaseModel):
+    events: list[Event]
 
 
 class MovieConfig(BaseModel):

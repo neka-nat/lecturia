@@ -1,19 +1,10 @@
 import re
 from pathlib import Path
-from typing import Literal
 
 from google import genai
 from langchain_core.runnables import Runnable
-from pydantic import BaseModel
 
-
-class Event(BaseModel):
-    type: Literal["start", "page", "animation", "end"]
-    time_sec: float
-
-
-class EventList(BaseModel):
-    events: list[Event]
+from ..models import EventList
 
 
 _prompt = """
@@ -31,8 +22,8 @@ _prompt = """
 ```json
 {{
   "events": [
-    {{"type": "animation", "time_sec": 10.5}},
-    {{"type": "animation", "time_sec": 20.5}},
+    {{"type": "slideStep", "time_sec": 10.5}},
+    {{"type": "slideStep", "time_sec": 20.5}},
     ...
   ]
 }}

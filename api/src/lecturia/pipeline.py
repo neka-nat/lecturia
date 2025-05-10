@@ -7,11 +7,11 @@ from loguru import logger
 from moviepy.editor import AudioFileClip, ImageSequenceClip
 from pydub import AudioSegment
 
-from .chains.event_extractor import Event, EventList, create_event_extractor_chain
+from .chains.event_extractor import create_event_extractor_chain
 from .chains.slide_maker import HtmlSlide, create_slide_maker_chain
 from .chains.slide_to_script import ScriptList, create_slide_to_script_chain
 from .chains.tts import create_tts_chain
-from .models import MovieConfig
+from .models import Event, EventList, MovieConfig
 from .media import remove_long_silence
 from .slide_player import PlayConfig, play_slide
 
@@ -90,19 +90,12 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
             events_anim: EventList = event_extractor.invoke(result_slide.html, slide_no + 1, audio_file)
             prev_sec = slide_page_event_sec[slide_no - 1] if slide_no > 0 else 0
             events.events.extend([Event(type=event.type, time_sec=prev_sec + event.time_sec) for event in events_anim.events])
-            events.events.append(Event(type="page", time_sec=slide_page_event_sec[slide_no]))
+            events.events.append(Event(type="slideNext", time_sec=slide_page_event_sec[slide_no]))
         logger.info(f"Events: {events}")
         with open(work_dir / "events.json", "w") as f:
             f.write(events.model_dump_json())
 
-    event_durations_sec: list[tuple[str, float]] = []
-    for prev_event, next_event in zip(
-        [Event(type="start", time_sec=0)] + events.events[:-1],
-        events.events,
-    ):
-        event_durations_sec.append((next_event.type, next_event.time_sec - prev_event.time_sec))
-
-    play_config = PlayConfig(fps=config.fps, event_durations_sec=event_durations_sec)
+    play_config = PlayConfig(fps=config.fps, events=events)
     logger.info(f"Play slide config: {play_config}")
     frames = await play_slide(result_slide.html, work_dir / "frames", play_config)
 

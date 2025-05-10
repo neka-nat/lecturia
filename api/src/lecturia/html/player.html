@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8" />
+<title>Slide-Player with Sprite</title>
+<style>
+  html,body{margin:0;height:100%}
+  #root{position:relative;width:100%;height:100vh;overflow:hidden}
+  #slide{width:90%;height:90%;border:none}
+  #char{position:absolute;right:-4vw;bottom:0;width:34vw;aspect-ratio:1/1;
+        pointer-events:none;z-index:10}
+</style></head><body>
+<div id="root">
+  <iframe id="slide"></iframe>
+  <canvas id="char"></canvas>
+</div>
+
+<script type="module">
+
+const slideFrame = document.getElementById('slide');
+const slideWin   = slideFrame.contentWindow;
+const canvas = document.getElementById('char');
+const ctx = canvas.getContext('2d');
+
+/* Hi-DPI */
+function fit(){const dpr=window.devicePixelRatio||1;
+  canvas.width=canvas.clientWidth*dpr;canvas.height=canvas.clientHeight*dpr;
+  ctx.resetTransform();ctx.scale(dpr,dpr);} fit();addEventListener('resize',fit);
+
+/* control sprite */
+let sprite = new Image(), curPose='idle';
+const poses = {   // pose → [startFrame, endFrame] （0-based, inclusive）
+  idle:[0,2], talk:[3,4], point:[5,6], smile:[7,9]
+};
+const cols=2, rows=3, fps=12, total=cols*rows;
+sprite.src='sprite.png'; sprite.onload=startDraw;
+
+function frameRect(i){const w=sprite.width/cols,h=sprite.height/rows;
+  return [(i%cols)*w, Math.floor(i/cols)*h, w, h];}
+
+function startDraw(){
+  let frame=0,last=0,interval=1000/fps;
+  requestAnimationFrame(function loop(t){
+    if(t-last>=interval){
+      ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
+      const [s,e]=poses[curPose]||poses.idle;
+      frame = (frame < s || frame > e)? s : frame+1>e? s : frame+1;
+      const [sx,sy,sw,sh]=frameRect(frame);
+      ctx.drawImage(sprite,sx,sy,sw,sh,0,0,canvas.clientWidth,canvas.clientHeight);
+      last=t;
+    }
+    requestAnimationFrame(loop);
+  });
+}
+
+/* signal receiver */
+window.playSignal = async ({type, ...p})=>{
+  switch(type){
+    case 'slideNext':
+      slideWin.postMessage('slide-next', '*');
+      break;
+    case 'slidePrev':
+      slideWin.postMessage('slide-prev', '*');
+      break;
+    case 'slideStep':
+      slideWin.postMessage('slide-step', '*');
+      break;
+    case 'pose':      curPose=p.name||'idle'; break;
+    case 'sprite':    sprite.src=p.src; await sprite.decode(); break;
+  }
+};
+</script>
+</body></html>
