@@ -27,9 +27,9 @@ function fit(){const dpr=window.devicePixelRatio||1;
 /* control sprite */
 let sprite = new Image(), curPose='idle';
 const poses = {   // pose → [startFrame, endFrame] （0-based, inclusive）
-  idle:[0,2], talk:[3,4], point:[5,6], smile:[7,9]
+  idle:[0,2], talk:[3,5], point:[6,8]
 };
-const cols=2, rows=3, fps=12, total=cols*rows;
+const cols=3, rows=3, fps=3, total=cols*rows;
 sprite.src='sprite.png'; sprite.onload=startDraw;
 
 function frameRect(i){const w=sprite.width/cols,h=sprite.height/rows;
@@ -43,7 +43,8 @@ function startDraw(){
       const [s,e]=poses[curPose]||poses.idle;
       frame = (frame < s || frame > e)? s : frame+1>e? s : frame+1;
       const [sx,sy,sw,sh]=frameRect(frame);
-      ctx.drawImage(sprite,sx,sy,sw,sh,0,0,canvas.clientWidth,canvas.clientHeight);
+      const margin = 10;
+      ctx.drawImage(sprite,sx+margin,sy+margin,sw-margin*2,sh-margin*2,0,0,canvas.clientWidth,canvas.clientHeight);
       last=t;
     }
     requestAnimationFrame(loop);
