@@ -89,7 +89,12 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
         for slide_no, audio_file in enumerate(audio_files):
             events_anim: EventList = event_extractor.invoke(result_slide.html, slide_no + 1, audio_file)
             prev_sec = slide_page_event_sec[slide_no - 1] if slide_no > 0 else 0
-            events.events.extend([Event(type=event.type, time_sec=prev_sec + event.time_sec) for event in events_anim.events])
+            events.events.extend(
+                [
+                    Event(type=event.type, time_sec=prev_sec + event.time_sec, name=event.name)
+                    for event in events_anim.events
+                ]
+            )
             events.events.append(Event(type="slideNext", time_sec=slide_page_event_sec[slide_no]))
         logger.info(f"Events: {events}")
         with open(work_dir / "events.json", "w") as f:

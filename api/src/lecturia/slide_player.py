@@ -17,12 +17,12 @@ class PlayConfig(BaseModel):
 
 async def play_slide(html_content: str, output_dir: Path, config: PlayConfig) -> list[Path]:
     fps = config.fps
-    event_durations_sec: list[tuple[str, float]] = []
+    event_durations_sec: list[tuple[str, float, str]] = []
     for prev_event, next_event in zip(
         [Event(type="start", time_sec=0)] + config.events.events[:-1],
         config.events.events,
     ):
-        event_durations_sec.append((next_event.type, next_event.time_sec - prev_event.time_sec))
+        event_durations_sec.append((next_event.type, next_event.time_sec - prev_event.time_sec, next_event.name))
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -39,9 +39,9 @@ async def play_slide(html_content: str, output_dir: Path, config: PlayConfig) ->
         """, html_content)
 
         frames: list[Path] = []
-        total_frames = int(sum(event_duration for _, event_duration in event_durations_sec) * fps)
+        total_frames = int(sum(event_duration for _, event_duration, _ in event_durations_sec) * fps)
         with tqdm(total=total_frames, desc="Generating frames") as pbar:
-            for event_index, (event_type, event_duration) in enumerate(event_durations_sec):
+            for event_index, (event_type, event_duration, event_name) in enumerate(event_durations_sec):
                 num_frames = int(event_duration * fps)
                 for frame_index in range(num_frames):
                     frame_path = output_dir / f"{event_index:03d}_{frame_index:05d}.png"
@@ -50,7 +50,7 @@ async def play_slide(html_content: str, output_dir: Path, config: PlayConfig) ->
                     pbar.update(1)
 
                 if event_index < len(event_durations_sec) - 1:
-                    await page.evaluate("ev => window.playSignal(ev)", {"type": event_type})
+                    await page.evaluate("ev => window.playSignal(ev)", {"type": event_type, "name": event_name})
                     await asyncio.sleep(0.1)
 
         await context.close()

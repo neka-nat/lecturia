@@ -9,9 +9,19 @@ from ..models import EventList
 
 _prompt = """
 添付の音声ファイルは以下のスライドの{slide_no}ページ目の説明を行っています。
+後で、ここにキャラクターアニメーションも追加されるのですが、
 音声ファイルからスライド内でのアニメーションの実行タイミングを調整し、そのイベントが発生する時間を秒数で出力してください。
 対象のアニメーション部分の説明が音声の中で開始されるタイミングを設定するようにしてください。
 アニメーションが含まれないスライドであれば、空の`events`を出力してください。
+
+イベントの種類には以下のものがあります。
+
+```json
+{{"type": "slideStep"}}  # スライド内のアニメーションを1ステップ進めるためのイベント
+{{"type": "pose", "name": "idle"}}  # キャラクターアニメーションをアイドル状態にするイベント
+{{"type": "pose", "name": "talk"}}  # キャラクターアニメーションを話している状態にするイベント
+{{"type": "pose", "name": "point"}}  # キャラクターアニメーションが強調を表現している状態にするイベント
+```
 
 ### スライド
 ```html
@@ -22,7 +32,9 @@ _prompt = """
 ```json
 {{
   "events": [
+    {{"type": "pose", "name": "idle", "time_sec": 0.0}},
     {{"type": "slideStep", "time_sec": 10.5}},
+    {{"type": "pose", "name": "talk", "time_sec": 15.0}},
     {{"type": "slideStep", "time_sec": 20.5}},
     ...
   ]
@@ -38,7 +50,7 @@ _prompt = """
 class EventExtractor(Runnable):
     def __init__(self):
         self.client = genai.Client()
-        self.model = "gemini-2.0-flash-001"
+        self.model = "gemini-2.5-flash-preview-04-17"
 
     def invoke(self, slides_html: str, slide_no: int, audio_file: Path | str) -> EventList:
         file = self.client.files.upload(file=audio_file)
