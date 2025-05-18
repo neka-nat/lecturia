@@ -62,7 +62,7 @@ scriptとしては以下のようなものを挿入してください。
 {detail}
 """
 
-def create_slide_maker_chain() -> Runnable:
+def create_slide_maker_chain(use_web_search: bool = True) -> Runnable:
     prompt_msgs = [
         SystemMessage(
             content="あなたは講義スライドを作成するプロフェッショナルです。タイトルに基づいた講義スライドをhtml形式で作成してください。"
@@ -75,5 +75,10 @@ def create_slide_maker_chain() -> Runnable:
         max_tokens=64000,
         thinking={"type": "enabled", "budget_tokens": 4096},
     )
-    chain = prompt | llm.with_structured_output(HtmlSlide)
+    if use_web_search:
+        tool = {"type": "web_search_20250305", "name": "web_search", "max_uses": 5}
+        llm_with_tools = llm.bind_tools([tool])
+        chain = prompt | llm_with_tools.with_structured_output(HtmlSlide)
+    else:
+        chain = prompt | llm.with_structured_output(HtmlSlide)
     return chain
