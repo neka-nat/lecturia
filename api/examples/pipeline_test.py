@@ -13,13 +13,15 @@ load_dotenv()
 async def main():
     result = await create_movie(
         MovieConfig(
-            topic="与党と野党ってなんですか？",
+            topic="排他的経済水域とは？",
             fps=15,
             detail="小学生でも分かるように、内容は元気で明るい感じにしてください。",
             extra_slide_rules=["reveal.jsを使用してスライドを作成してください。"],
+            sprite_name="sprite_cat.png",
+            voice_type="cat",
         ),
-        work_dir=Path(f"results/{uuid.uuid4()}"),
-        # work_dir=Path("results/4992ab72-b38a-4edb-b1b2-c02b1a34e9d9"),
+        # work_dir=Path(f"results/{uuid.uuid4()}"),
+        work_dir=Path("results/73df2821-a145-41dd-a140-7d1cf6489b7c"),
     )
     print(result)
 

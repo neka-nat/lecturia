@@ -64,7 +64,7 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
     for script in result_script.scripts:
         audio_file = work_dir / f"audio_{script.slide_no}.mp3"
         if not audio_file.exists():
-            audio = tts.invoke(script.script)
+            audio = tts.invoke(script.script, voice_type=config.voice_type)
             audio.stream_to_file(audio_file)
             removed_silence_audio = remove_long_silence(AudioSegment.from_mp3(audio_file))
             removed_silence_audio.export(audio_file, format="mp3")
@@ -104,7 +104,7 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
         with open(work_dir / "events.json", "w") as f:
             f.write(events.model_dump_json())
 
-    play_config = PlayConfig(fps=config.fps, events=events)
+    play_config = PlayConfig(fps=config.fps, events=events, sprite_name=config.sprite_name)
     logger.info(f"Play slide config: {play_config}")
     frames = await play_slide(result_slide.html, work_dir / "frames", play_config)
 

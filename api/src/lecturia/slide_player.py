@@ -13,6 +13,7 @@ class PlayConfig(BaseModel):
     events: EventList
     width: int = 1280
     height: int = 720
+    sprite_name: str | None = None
 
 
 async def play_slide(html_content: str, output_dir: Path, config: PlayConfig) -> list[Path]:
@@ -37,6 +38,8 @@ async def play_slide(html_content: str, output_dir: Path, config: PlayConfig) ->
             await new Promise(res => { iframe.onload = () => res(); iframe.src = blobUrl; });
           }
         """, html_content)
+        if config.sprite_name:
+            await page.evaluate("src => window.setSprite(src)", config.sprite_name)
 
         frames: list[Path] = []
         total_frames = int(sum(event_duration for _, event_duration, _ in event_durations_sec) * fps)
