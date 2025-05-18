@@ -13,9 +13,10 @@ load_dotenv()
 async def main():
     result = await create_movie(
         MovieConfig(
-            topic="AIがIQ130超えた？これってどういうこと？",
+            topic="与党と野党ってなんですか？",
             fps=15,
             detail="小学生でも分かるように、内容は元気で明るい感じにしてください。",
+            extra_slide_rules=["reveal.jsを使用してスライドを作成してください。"],
         ),
         work_dir=Path(f"results/{uuid.uuid4()}"),
         # work_dir=Path("results/4992ab72-b38a-4edb-b1b2-c02b1a34e9d9"),

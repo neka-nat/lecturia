@@ -34,7 +34,11 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
             result_slide: HtmlSlide = HtmlSlide(html=f.read())
     else:
         result_slide: HtmlSlide = slide_maker.invoke(
-            {"topic": config.topic, "detail": config.detail or ""},
+            {
+                "topic": config.topic,
+                "detail": config.detail or "",
+                "extra_rules": "\n".join([f"- {rule}" for rule in config.extra_slide_rules]),
+            },
             config={
                 "callbacks": [ConsoleCallbackHandler()],
             },

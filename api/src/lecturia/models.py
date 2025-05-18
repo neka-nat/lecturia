@@ -16,6 +16,7 @@ class EventList(BaseModel):
 class MovieConfig(BaseModel):
     topic: str
     detail: str | None = None
+    extra_slide_rules: list[str]  = []
     fps: int = 30
     num_slides: int | None = None
     page_transition_duration_sec: float = 0.5
