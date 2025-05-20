@@ -1,4 +1,5 @@
 import tempfile
+import time
 from pathlib import Path
 
 import numpy as np
@@ -32,7 +33,7 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
     if (work_dir / "result_slide.html").exists():
         logger.info(f"Loading result_slide.html from {work_dir / 'result_slide.html'}")
         with open(work_dir / "result_slide.html", "r") as f:
-            result_slide: HtmlSlide = HtmlSlide(html=f.read())
+            result_slide: HtmlSlide = HtmlSlide.from_html(f.read())
     else:
         result_slide: HtmlSlide = slide_maker.invoke(
             {
@@ -44,9 +45,11 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
                 "callbacks": [ConsoleCallbackHandler()],
             },
         )
+        # Avoid rate limit
+        time.sleep(60)
         result_slide = edit_slide(result_slide)
         with open(work_dir / "result_slide.html", "w") as f:
-            f.write(result_slide.html)
+            f.write(result_slide.export_embed_images())
 
     if (work_dir / "result_script.json").exists():
         logger.info(f"Loading result_script.json from {work_dir / 'result_script.json'}")
@@ -108,7 +111,7 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
 
     play_config = PlayConfig(fps=config.fps, events=events, sprite_name=config.sprite_name)
     logger.info(f"Play slide config: {play_config}")
-    frames = await play_slide(result_slide.html, work_dir / "frames", play_config)
+    frames = await play_slide(result_slide.export_embed_images(), work_dir / "frames", play_config)
 
     movie_clip = ImageSequenceClip([str(frame) for frame in frames], fps=play_config.fps)
     audio_clip = AudioFileClip(str(combined_audio_file))

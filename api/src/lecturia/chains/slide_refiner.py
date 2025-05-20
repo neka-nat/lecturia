@@ -37,12 +37,10 @@ def create_slide_refiner_chain() -> Runnable:
     llm = ChatAnthropic(
         model="claude-3-7-sonnet-20250219",
         max_tokens=64000,
-        thinking={"type": "enabled", "budget_tokens": 4096},
     )
 
     def parse(ai_message: AIMessage) -> HtmlSlide:
         """Parse the AI message."""
-        # indexの0番目は"thinking"で、1番目が"text"
-        return HtmlSlide(html=re.search(r"```html\n(.*)\n```", ai_message.content[1]["text"], re.DOTALL).group(1))
+        return HtmlSlide(html=re.search(r"```html\n(.*)\n```", ai_message.content, re.DOTALL).group(1))
 
     return prompt | llm | parse

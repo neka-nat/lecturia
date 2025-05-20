@@ -25,12 +25,12 @@ function fit(){const dpr=window.devicePixelRatio||1;
   ctx.resetTransform();ctx.scale(dpr,dpr);} fit();addEventListener('resize',fit);
 
 /* control sprite */
-let sprite = new Image(), curPose='idle';
+let sprite = null, curPose='idle';
 const poses = {   // pose → [startFrame, endFrame] （0-based, inclusive）
   idle:[0,2], talk:[3,5], point:[6,8]
 };
 const cols=3, rows=3, fps=3, total=cols*rows;
-sprite.src='sprite_woman.png'; sprite.onload=startDraw;
+let animStarted = false;
 
 function frameRect(i){const w=sprite.width/cols,h=sprite.height/rows;
   return [(i%cols)*w, Math.floor(i/cols)*h, w, h];}
@@ -56,8 +56,14 @@ window.setSprite = async function (src) {
     const img = new Image();
     img.src = src;
     await img.decode();
+
     sprite = img;
     curPose = 'idle';
+
+    if (!animStarted) {
+      startDraw();
+      animStarted = true;
+    }
     console.log('[sprite] switched to', src);
   } catch (e) {
     console.error('[sprite] failed:', e);

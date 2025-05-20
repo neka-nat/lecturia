@@ -4,6 +4,7 @@ import os
 import httpx
 import requests
 from langchain_core.runnables import Runnable
+from loguru import logger
 from PIL import Image
 
 
@@ -41,10 +42,15 @@ class ImageExplorer(Runnable):
             "Accept-Encoding": "gzip, deflate",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36"
         }
-        return [
-            Image.open(io.BytesIO(requests.get(result["properties"]["url"], headers=headers).content)).convert("RGBA")
-            for result in results
-        ]
+        images = []
+        for result in results:
+            try:
+                images.append(
+                    Image.open(io.BytesIO(requests.get(result["properties"]["url"], headers=headers).content)).convert("RGBA")
+                )
+            except Exception as e:
+                logger.error(f"Failed to load image: {e}")
+        return images
 
 
 def create_image_explorer_chain() -> Runnable:

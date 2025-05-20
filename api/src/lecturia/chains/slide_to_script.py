@@ -50,7 +50,7 @@ _prompt_template = """
 出力:
 """
 
-def create_slide_to_script_chain(use_web_search: bool = True) -> Runnable:
+def create_slide_to_script_chain(use_web_search: bool = False, num_max_web_search: int = 2) -> Runnable:
     prompt_msgs = [
         SystemMessage(
             content="あなたはプレゼンの台本を作成するプロフェッショナルです。与えられたhtml形式のスライド資料からプレゼンの台本を作成してください。"
@@ -67,11 +67,11 @@ def create_slide_to_script_chain(use_web_search: bool = True) -> Runnable:
     def parse(ai_message: AIMessage) -> ScriptList:
         """Parse the AI message."""
         # indexの0番目は"thinking"で、1番目が"text"
-        json_str = re.search(r"```json\n(.*)\n```", ai_message.content[1]["text"], re.DOTALL).group(1)
+        json_str = re.search(r"```json\n(.*)\n```", ai_message.content[-1]["text"], re.DOTALL).group(1)
         return ScriptList.model_validate_json(json_str)
 
-    if use_web_search:
-        tool = {"type": "web_search_20250305", "name": "web_search", "max_uses": 5}
+    if use_web_search and num_max_web_search > 0:
+        tool = {"type": "web_search_20250305", "name": "web_search", "max_uses": num_max_web_search}
         llm_with_tools = llm.bind_tools([tool])
         chain = prompt | llm_with_tools | parse
     else:

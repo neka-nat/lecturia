@@ -1,14 +1,48 @@
+import base64
+import io
 import re
+import uuid
 
+from bs4 import BeautifulSoup
 from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain_core.runnables import Runnable
 from langchain.schema import SystemMessage, AIMessage
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
+from PIL import Image
 
 
 class HtmlSlide(BaseModel):
     html: str = Field(description="スライドのhtml形式の文字列")
+    image_map: dict[str, Image.Image] | None = Field(default=None, description="スライド内の画像のマップ")
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    @classmethod
+    def from_html(cls, html: str) -> "HtmlSlide":
+        soup = BeautifulSoup(html, "html.parser")
+        image_map = {}
+        for img_tag in soup.find_all("img"):
+            src = img_tag.get("src")
+            if src is None:
+                continue
+            src_id = uuid.uuid4().hex
+            image_map[src_id] = Image.open(io.BytesIO(base64.b64decode(src.split(",")[1])))
+            img_tag["src"] = src_id
+        return cls(html=soup.prettify(), image_map=image_map)
+
+    def export_embed_images(self) -> str:
+        if self.image_map is None:
+            return self.html
+        soup = BeautifulSoup(self.html, "html.parser")
+        for img_tag in soup.find_all("img"):
+            src = img_tag.get("src")
+            if src is None:
+                continue
+            buf = io.BytesIO()
+            self.image_map[src].save(buf, format="PNG")
+            img_tag["src"] = f"data:image/png;base64,{base64.b64encode(buf.getvalue()).decode('utf-8')}"
+        return soup.prettify()
 
 
 _prompt_template = """
@@ -71,7 +105,7 @@ scriptとしては以下のようなものを挿入してください。
 出力:
 """
 
-def create_slide_maker_chain(use_web_search: bool = True) -> Runnable:
+def create_slide_maker_chain(use_web_search: bool = True, num_max_web_search: int = 2) -> Runnable:
     prompt_msgs = [
         SystemMessage(
             content="あなたは講義スライドを作成するプロフェッショナルです。タイトルに基づいた講義スライドをhtml形式で作成してください。"
@@ -88,11 +122,11 @@ def create_slide_maker_chain(use_web_search: bool = True) -> Runnable:
     def parse(ai_message: AIMessage) -> HtmlSlide:
         """Parse the AI message."""
         # indexの0番目は"thinking"で、1番目が"text"
-        return HtmlSlide(html=re.search(r"```html\n(.*)\n```", ai_message.content[1]["text"], re.DOTALL).group(1))
+        return HtmlSlide(html=re.search(r"```html\n(.*)\n```", ai_message.content[-1]["text"], re.DOTALL).group(1))
 
 
-    if use_web_search:
-        tool = {"type": "web_search_20250305", "name": "web_search", "max_uses": 5}
+    if use_web_search and num_max_web_search > 0:
+        tool = {"type": "web_search_20250305", "name": "web_search", "max_uses": num_max_web_search}
         llm_with_tools = llm.bind_tools([tool])
         chain = prompt | llm_with_tools | parse
     else:
