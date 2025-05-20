@@ -1,7 +1,9 @@
+import re
+
 from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain_core.runnables import Runnable
-from langchain.schema import SystemMessage
+from langchain.schema import SystemMessage, AIMessage
 from pydantic import BaseModel, Field
 
 
@@ -53,13 +55,20 @@ scriptとしては以下のようなものを挿入してください。
 </body>
 ```
 
-- 数学的なアニメーションはスライド内に`<canvas>`や`<svg>`を挿入し、MathBoxなどを使用して作成してください。
-- 視覚的に見やすいデザインのスライドを作成してください。図を使ったり、文字同士が不必要に重ならないようにレイアウトしてください。
+- 視覚的に見やすいデザインのスライドを作成してください。図やアニメーションを使ったり、文字同士が不必要に重ならないようにレイアウトしてください。
+  - 図は簡単な図解や図式のようなものはInline SVGで記述してください。
+  - 複雑な写真や絵画のようなものは`<img>`タグを挿入し、`src`に"generated-image"と記述し、画像の説明を`alt`に入れてください。
+  - 実在する人物や商品、地域などの写真を挿入したい場合は、`<img>`タグを挿入し、`src`に"searched-image"と記述し、画像の検索クエリ(複数の場合はカンマ区切り)を`alt`に入れてください。
+  - 数学的なアニメーションはスライド内に`<canvas>`や`<svg>`を挿入し、MathBoxなどを使用して作成してください。
 {extra_rules}
 
 ## スライドの内容
 タイトル: {topic}
 {detail}
+
+## ここから本番
+出力は```html```で囲んでください。
+出力:
 """
 
 def create_slide_maker_chain(use_web_search: bool = True) -> Runnable:
@@ -75,10 +84,17 @@ def create_slide_maker_chain(use_web_search: bool = True) -> Runnable:
         max_tokens=64000,
         thinking={"type": "enabled", "budget_tokens": 4096},
     )
+
+    def parse(ai_message: AIMessage) -> HtmlSlide:
+        """Parse the AI message."""
+        # indexの0番目は"thinking"で、1番目が"text"
+        return HtmlSlide(html=re.search(r"```html\n(.*)\n```", ai_message.content[1]["text"], re.DOTALL).group(1))
+
+
     if use_web_search:
         tool = {"type": "web_search_20250305", "name": "web_search", "max_uses": 5}
         llm_with_tools = llm.bind_tools([tool])
-        chain = prompt | llm_with_tools.with_structured_output(HtmlSlide)
+        chain = prompt | llm_with_tools | parse
     else:
-        chain = prompt | llm.with_structured_output(HtmlSlide)
+        chain = prompt | llm | parse
     return chain

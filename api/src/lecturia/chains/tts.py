@@ -27,13 +27,22 @@ Delivery: Fast-paced and dynamic, with rising intonation to build momentum and k
 """
 
 
+_instructions_senior_male = """Tone: The voice should be refined, formal, and delightfully theatrical, reminiscent of a charming radio announcer from the early 20th century.
+
+Pacing: The speech should flow smoothly at a steady cadence, neither rushed nor sluggish, allowing for clarity and a touch of grandeur.
+
+Pronunciation: Words should be enunciated crisply and elegantly, with an emphasis on vintage expressions and a slight flourish on key phrases.
+"""
+
+
 _voice_types_map = {
     "woman": VoiceType(name="sage", instructions=_instructions_woman),
     "cat": VoiceType(name="onyx", instructions=_instructions_cat),
+    "senior_male": VoiceType(name="ash", instructions=_instructions_senior_male),
 }
 
 
-VoiceTypes = Literal["woman", "cat"]
+VoiceTypes = Literal["woman", "cat", "senior_male"]
 
 
 class TTS(Runnable):
@@ -48,6 +57,7 @@ class TTS(Runnable):
             voice=_voice_types_map[voice_type].name,
             input=text,
             instructions=_voice_types_map[voice_type].instructions,
+            speed=1.5,
         )
         return response
 

@@ -13,6 +13,7 @@ from .chains.slide_to_script import ScriptList, create_slide_to_script_chain
 from .chains.tts import create_tts_chain
 from .models import Event, EventList, MovieConfig
 from .media import remove_long_silence
+from .slide_editor import edit_slide
 from .slide_player import PlayConfig, play_slide
 
 
@@ -43,6 +44,7 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
                 "callbacks": [ConsoleCallbackHandler()],
             },
         )
+        result_slide = edit_slide(result_slide)
         with open(work_dir / "result_slide.html", "w") as f:
             f.write(result_slide.html)
 
