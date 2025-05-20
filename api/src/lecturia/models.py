@@ -24,3 +24,4 @@ class MovieConfig(BaseModel):
     page_transition_duration_sec: float = 0.5
     sprite_name: str | None = None
     voice_type: VoiceTypes | None = None
+    web_search: bool = False

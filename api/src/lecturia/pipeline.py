@@ -25,7 +25,7 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
 
     work_dir.mkdir(parents=True, exist_ok=True)
 
-    slide_maker = create_slide_maker_chain()
+    slide_maker = create_slide_maker_chain(config.web_search)
     slide_to_script = create_slide_to_script_chain()
     tts = create_tts_chain()
     event_extractor = create_event_extractor_chain()

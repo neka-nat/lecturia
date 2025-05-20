@@ -57,7 +57,7 @@ class TTS(Runnable):
             voice=_voice_types_map[voice_type].name,
             input=text,
             instructions=_voice_types_map[voice_type].instructions,
-            speed=1.5,
+            speed=2.0,
         )
         return response
 
