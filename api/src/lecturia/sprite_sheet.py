@@ -21,14 +21,14 @@ def align_sprite_sheet_with_baseline(
     # extract frames
     for r in range(rows):
         for c in range(cols):
-            frame = sheet.crop((c*cw, r*ch, (c+1)*cw, (r+1)*ch))
+            frame = sheet.crop((c * cw, r * ch, (c + 1) * cw, (r + 1) * ch))
             arr = np.array(frame)
-            bg = arr[[0,0,-1,-1],[0,-1,0,-1],:3].astype(float).mean(0)
+            bg = arr[[0, 0, -1, -1], [0, -1, 0, -1], :3].astype(float).mean(0)
             diff = np.linalg.norm(arr[:,:,:3]-bg, axis=2)
             mask = diff > thresh
             ys, xs = np.nonzero(mask)
-            cx = xs.mean() if xs.size else cw/2
-            baseline = ys.max() if ys.size else ch-1
+            cx = xs.mean() if xs.size else cw / 2
+            baseline = ys.max() if ys.size else ch - 1
             frames.append(frame)
             centers_x.append(cx)
             baselines.append(baseline)
@@ -38,24 +38,23 @@ def align_sprite_sheet_with_baseline(
     for r in range(rows):
         row_centers = centers_x[idx:idx+cols]
         row_baselines = baselines[idx:idx+cols]
-        target_cx = np.mean(row_centers)
         target_baseline = np.max(row_baselines)
         for j in range(cols):
-            frame = frames[idx+j]
+            frame = frames[idx + j]
             cx = row_centers[j]
             baseline = row_baselines[j]
-            dx = int(round(cw/2 - cx))
+            dx = int(round(cw / 2 - cx))
             dy = int(round(target_baseline - baseline))
-            canvas = Image.new("RGBA", (cw, ch), (0,0,0,0))
+            canvas = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
             canvas.paste(frame, (dx, dy), frame)
             aligned_frames.append(canvas)
         idx += cols
 
-    out_sheet = Image.new("RGBA", (sw, sh), (0,0,0,0))
+    out_sheet = Image.new("RGBA", (sw, sh), (0, 0, 0, 0))
     idx = 0
     for r in range(rows):
         for c in range(cols):
-            out_sheet.paste(aligned_frames[idx], (c*cw, r*ch), aligned_frames[idx])
+            out_sheet.paste(aligned_frames[idx], (c * cw, r * ch), aligned_frames[idx])
             idx +=1
     return out_sheet
 
@@ -69,7 +68,7 @@ def make_gif(image: Image.Image, out_path: str | Path) -> None:
 
     for r in range(rows):
         for c in range(cols):
-            box = (c*cw, r*ch, (c+1)*cw, (r+1)*ch)
+            box = (c * cw, r * ch, (c + 1) * cw, (r + 1) * ch)
             gif_frames.append(image.crop(box))
 
     gif_frames[0].save(

@@ -2,6 +2,7 @@ import re
 from pathlib import Path
 
 from google import genai
+from google.genai import types
 from langchain_core.runnables import Runnable
 
 from ..models import EventList
@@ -50,7 +51,7 @@ _prompt = """
 class EventExtractor(Runnable):
     def __init__(self):
         self.client = genai.Client()
-        self.model = "gemini-2.5-flash-preview-04-17"
+        self.model = "gemini-2.5-flash-preview-05-20"
 
     def invoke(self, slides_html: str, slide_no: int, audio_file: Path | str) -> EventList:
         file = self.client.files.upload(file=audio_file)
@@ -60,6 +61,11 @@ class EventExtractor(Runnable):
                 file,
                 _prompt.format(slide_no=slide_no, slides=slides_html),
             ],
+            config=types.GenerateContentConfig(
+                thinking_config=types.ThinkingConfig(
+                    include_thoughts=True
+                )
+            )
         )
         json_str = re.search(r"```json\n(.*)\n```", response.text, re.DOTALL).group(1)
         return EventList.model_validate_json(json_str)

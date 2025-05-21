@@ -50,7 +50,7 @@ _prompt_template = """
 出力:
 """
 
-def create_slide_to_script_chain(use_web_search: bool = False, num_max_web_search: int = 2) -> Runnable:
+def create_slide_to_script_chain(use_web_search: bool = True, num_max_web_search: int = 2) -> Runnable:
     prompt_msgs = [
         SystemMessage(
             content="あなたはプレゼンの台本を作成するプロフェッショナルです。与えられたhtml形式のスライド資料からプレゼンの台本を作成してください。"

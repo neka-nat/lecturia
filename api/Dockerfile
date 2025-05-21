@@ -1,17 +1,8 @@
-# Stage to install Python dependencies with uv
-FROM ghcr.io/astral-sh/uv:0.5.29 AS uv
+FROM python:3.12-slim
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-# Copy dependency declarations
-COPY api/pyproject.toml api/uv.lock ./
-
-# Install packages into the system site-packages
-RUN uv pip install --system -r uv.lock
-
-FROM python:3.12-slim
-
-# Install system dependencies required for movie rendering and Playwright
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ffmpeg \
@@ -23,15 +14,9 @@ RUN apt-get update && \
         wget && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy installed Python packages and uv from the build stage
-COPY --from=uv /usr/local /usr/local
+COPY . /app
 
-WORKDIR /app
-
-# Copy project files
-COPY api /app
-
-# Install Playwright browsers
+RUN uv pip install -e . --break-system-packages --system
 RUN playwright install
 
 CMD ["python", "examples/pipeline_test.py"]

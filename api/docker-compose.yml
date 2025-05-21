@@ -1,0 +1,12 @@
+version: "3"
+services:
+  lecturia:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    env_file:
+      - .env

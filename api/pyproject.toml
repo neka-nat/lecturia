@@ -26,6 +26,7 @@ dependencies = [
     "pydub>=0.25.1",
     "python-dotenv>=1.0.1",
     "tqdm>=4.67.1",
+    "tts-clients==0.3.0",
 ]
 
 [build-system]

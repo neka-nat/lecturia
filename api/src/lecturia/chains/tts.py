@@ -2,8 +2,9 @@ from typing import Literal
 
 from langchain_core.runnables import Runnable
 from openai import OpenAI
-from openai import APIResponse
 from pydantic import BaseModel
+from tts_clients.google.client import GoogleTTSClient
+from tts_clients.google.models import TextToAudioRequest, TextToAudioResponse
 
 
 class VoiceType(BaseModel):
@@ -36,9 +37,9 @@ Pronunciation: Words should be enunciated crisply and elegantly, with an emphasi
 
 
 _voice_types_map = {
-    "woman": VoiceType(name="sage", instructions=_instructions_woman),
-    "cat": VoiceType(name="onyx", instructions=_instructions_cat),
-    "senior_male": VoiceType(name="ash", instructions=_instructions_senior_male),
+    "woman": VoiceType(name="Autonoe", instructions=_instructions_woman),
+    "cat": VoiceType(name="Orus", instructions=_instructions_cat),
+    "senior_male": VoiceType(name="Charon", instructions=_instructions_senior_male),
 }
 
 
@@ -49,16 +50,15 @@ class TTS(Runnable):
     def __init__(self):
         self.client = OpenAI()
 
-    def invoke(self, text: str, voice_type: VoiceTypes | None = None) -> APIResponse:
+    def invoke(self, text: str, voice_type: VoiceTypes | None = None) -> TextToAudioResponse:
         voice_type = voice_type or "woman"
-
-        response = self.client.audio.speech.create(
-            model="gpt-4o-mini-tts",
-            voice=_voice_types_map[voice_type].name,
-            input=text,
+        req = TextToAudioRequest(
+            text=text,
+            voice_name=_voice_types_map[voice_type].name,
             instructions=_voice_types_map[voice_type].instructions,
-            speed=2.0,
         )
+        client = GoogleTTSClient()
+        response = client.text_to_audio(req)
         return response
 
 
