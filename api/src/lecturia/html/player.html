@@ -43,7 +43,7 @@ function startDraw(){
       const [s,e]=poses[curPose]||poses.idle;
       frame = (frame < s || frame > e)? s : frame+1>e? s : frame+1;
       const [sx,sy,sw,sh]=frameRect(frame);
-      const margin = 10;
+      const margin = 3;
       ctx.drawImage(sprite,sx+margin,sy+margin,sw-margin*2,sh-margin*2,0,0,canvas.clientWidth,canvas.clientHeight);
       last=t;
     }

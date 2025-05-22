@@ -12,51 +12,48 @@ def align_sprite_sheet_with_baseline(
     sheet = in_image.convert("RGBA")
     sw, sh = sheet.size
     cols, rows = grid
-    cw, ch = sw//cols, sh//rows
+    cw, ch = sw // cols, sh // rows
 
-    frames = []
-    centers_x = []
-    baselines = []
+    frames, cx_list, bl_list = [], [], []
 
-    # extract frames
     for r in range(rows):
         for c in range(cols):
-            frame = sheet.crop((c * cw, r * ch, (c + 1) * cw, (r + 1) * ch))
-            arr = np.array(frame)
-            bg = arr[[0, 0, -1, -1], [0, -1, 0, -1], :3].astype(float).mean(0)
-            diff = np.linalg.norm(arr[:,:,:3]-bg, axis=2)
-            mask = diff > thresh
+            frame = sheet.crop((c*cw, r*ch, (c+1)*cw, (r+1)*ch))
+            alpha = np.array(frame)[:, :, 3]
+            mask  = alpha > 0
             ys, xs = np.nonzero(mask)
             cx = xs.mean() if xs.size else cw / 2
             baseline = ys.max() if ys.size else ch - 1
             frames.append(frame)
-            centers_x.append(cx)
-            baselines.append(baseline)
+            cx_list.append(cx)
+            bl_list.append(baseline)
 
-    aligned_frames = []
+    aligned = []
     idx = 0
     for r in range(rows):
-        row_centers = centers_x[idx:idx+cols]
-        row_baselines = baselines[idx:idx+cols]
-        target_baseline = np.max(row_baselines)
+        row_cx = cx_list[idx:idx+cols]
+        row_bl = bl_list[idx:idx+cols]
+        tgt_cx = np.mean(row_cx)
+        tgt_bl = np.max(row_bl)
+
         for j in range(cols):
-            frame = frames[idx + j]
-            cx = row_centers[j]
-            baseline = row_baselines[j]
-            dx = int(round(cw / 2 - cx))
-            dy = int(round(target_baseline - baseline))
-            canvas = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
+            frame   = frames[idx+j]
+            dx      = int(round(cw/2 - row_cx[j]))
+            dy      = int(round(tgt_bl - row_bl[j]))
+            canvas  = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
             canvas.paste(frame, (dx, dy), frame)
-            aligned_frames.append(canvas)
+            aligned.append(canvas)
         idx += cols
 
-    out_sheet = Image.new("RGBA", (sw, sh), (0, 0, 0, 0))
+    sheet_aligned = Image.new("RGBA", (sw, sh), (0, 0, 0, 0))
     idx = 0
     for r in range(rows):
         for c in range(cols):
-            out_sheet.paste(aligned_frames[idx], (c * cw, r * ch), aligned_frames[idx])
-            idx +=1
-    return out_sheet
+            sheet_aligned.paste(aligned[idx],
+                                (c*cw, r*ch),
+                                aligned[idx])
+            idx += 1
+    return sheet_aligned
 
 
 def make_gif(image: Image.Image, out_path: str | Path) -> None:
