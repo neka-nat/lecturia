@@ -70,7 +70,7 @@ scriptとしては以下のようなものを挿入してください。
 </script>
 ```
 
-- それぞれのイベントトリガは互いに干渉しない独立したトリガになるようにしてください。
+- **それぞれのイベントトリガは互いに干渉しない独立して動作するトリガになるようにしてください。**
 - 作成されたスライドは`iframe`で別のhtmlファイルに埋め込まれることを想定しています。スケールを変更しても文字などが見切れないようにしてください。
 
 埋め込み用のhtmlファイルの例
@@ -114,15 +114,15 @@ def create_slide_maker_chain(use_web_search: bool = True, num_max_web_search: in
     ]
     prompt = ChatPromptTemplate(messages=prompt_msgs)
     llm = ChatAnthropic(
-        model="claude-3-7-sonnet-20250219",
+        model="claude-sonnet-4-20250514",
         max_tokens=64000,
         thinking={"type": "enabled", "budget_tokens": 4096},
     )
 
     def parse(ai_message: AIMessage) -> HtmlSlide:
         """Parse the AI message."""
-        # indexの0番目は"thinking"で、1番目が"text"
-        return HtmlSlide(html=re.search(r"```html\n(.*)\n```", ai_message.content[-1]["text"], re.DOTALL).group(1))
+        text = "".join([m["text"] for m in ai_message.content if m["type"] == "text"])
+        return HtmlSlide(html=re.search(r"```html\n(.*)\n```", text, re.DOTALL).group(1))
 
 
     if use_web_search and num_max_web_search > 0:

@@ -14,7 +14,7 @@ _prompt_template = """
   - デザインやレイアウトが見やすくなっているか
   - 文字や図の見切れ、重なりが発生していないか
   - 全体を通して統一感のあるデザインになっているか
-- `<script>`の部分は変更しないでください。
+- `<script>`の部分は絶対に変更しないでください。
 
 ### 修正前のスライド
 {before_slide}
@@ -35,7 +35,7 @@ def create_slide_refiner_chain() -> Runnable:
         ]
     )
     llm = ChatAnthropic(
-        model="claude-3-7-sonnet-20250219",
+        model="claude-sonnet-4-20250514",
         max_tokens=64000,
     )
 

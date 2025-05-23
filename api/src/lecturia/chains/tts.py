@@ -12,27 +12,24 @@ class VoiceType(BaseModel):
     instructions: str
 
 
-_instructions_woman = """Voice: Warm, upbeat, and reassuring, with a steady and confident cadence that keeps the conversation calm and productive.
+_instructions_woman = """Voice - Warm, upbeat, and reassuring, with a steady and confident cadence that keeps the conversation calm and productive.
+Tone - Positive and solution-oriented, always focusing on the next steps rather than dwelling on the problem.
+Dialect - Neutral and professional, avoiding overly casual speech but maintaining a friendly and approachable style.
 
-Tone: Positive and solution-oriented, always focusing on the next steps rather than dwelling on the problem.
-
-Dialect: Neutral and professional, avoiding overly casual speech but maintaining a friendly and approachable style.
 """
 
 
-_instructions_cat = """Voice: High-energy, upbeat, and encouraging, projecting enthusiasm and motivation.
+_instructions_cat = """Voice - High-energy, upbeat, and encouraging, projecting enthusiasm and motivation.
+Punctuation - Short, punchy sentences with strategic pauses to maintain excitement and clarity.
+Delivery - Fast-paced and dynamic, with rising intonation to build momentum and keep engagement high.
 
-Punctuation: Short, punchy sentences with strategic pauses to maintain excitement and clarity.
-
-Delivery: Fast-paced and dynamic, with rising intonation to build momentum and keep engagement high.
 """
 
 
-_instructions_senior_male = """Tone: The voice should be refined, formal, and delightfully theatrical, reminiscent of a charming radio announcer from the early 20th century.
+_instructions_senior_male = """Tone - The voice should be refined, formal, and delightfully theatrical, reminiscent of a charming radio announcer from the early 20th century.
+Pacing - The speech should flow smoothly at a steady cadence, neither rushed nor sluggish, allowing for clarity and a touch of grandeur.
+Pronunciation - Words should be enunciated crisply and elegantly, with an emphasis on vintage expressions and a slight flourish on key phrases.
 
-Pacing: The speech should flow smoothly at a steady cadence, neither rushed nor sluggish, allowing for clarity and a touch of grandeur.
-
-Pronunciation: Words should be enunciated crisply and elegantly, with an emphasis on vintage expressions and a slight flourish on key phrases.
 """
 
 

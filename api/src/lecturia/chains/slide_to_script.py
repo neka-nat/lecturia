@@ -59,15 +59,15 @@ def create_slide_to_script_chain(use_web_search: bool = True, num_max_web_search
     ]
     prompt = ChatPromptTemplate(messages=prompt_msgs)
     llm = ChatAnthropic(
-        model="claude-3-7-sonnet-20250219",
+        model="claude-sonnet-4-20250514",
         max_tokens=64000,
         thinking={"type": "enabled", "budget_tokens": 4096},
     )
 
     def parse(ai_message: AIMessage) -> ScriptList:
         """Parse the AI message."""
-        # indexの0番目は"thinking"で、1番目が"text"
-        json_str = re.search(r"```json\n(.*)\n```", ai_message.content[-1]["text"], re.DOTALL).group(1)
+        text = "".join([m["text"] for m in ai_message.content if m["type"] == "text"])
+        json_str = re.search(r"```json\n(.*)\n```", text, re.DOTALL).group(1)
         return ScriptList.model_validate_json(json_str)
 
     if use_web_search and num_max_web_search > 0:
