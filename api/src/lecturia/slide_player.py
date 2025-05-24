@@ -49,10 +49,10 @@ async def play_slide(html_content: str, output_dir: Path, config: PlayConfig) ->
         """, html_content)
         await page.evaluate("layout => window.setSlideLayout(layout)", config.layout)
         if config.sprite_names:
-            # Right
+            # 1st character -> Right
             await page.evaluate("src => window.setSprite(src, 'right')", config.sprite_names[0])
         if len(config.sprite_names) > 1:
-            # Left
+            # 2nd character -> Left
             await page.evaluate("src => window.setSprite(src, 'left')", config.sprite_names[1])
 
 

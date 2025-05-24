@@ -29,9 +29,12 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
         f.write(config.model_dump_json())
 
     slide_maker = create_slide_maker_chain(config.web_search)
-    slide_to_script = create_slide_to_script_chain(config.speaker_names)
+    slide_to_script = create_slide_to_script_chain(config.speakers)
     tts = create_tts_chain()
     event_extractor = create_event_extractor_chain()
+    speaker_left_right_map = {
+        speaker.name: "right" if i == 0 else "left" for i, speaker in enumerate(config.speakers)
+    }
 
     if (work_dir / "result_slide.html").exists():
         logger.info(f"Loading result_slide.html from {work_dir / 'result_slide.html'}")
@@ -72,7 +75,7 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
     for script in result_script.scripts:
         audio_file = work_dir / f"audio_{script.slide_no}.mp3"
         if not audio_file.exists():
-            if len(config.sprite_names) == 1:
+            if len(config.characters) == 1:
                 text = script.script[0].content
                 audio = tts.invoke(text, voice_type=config.characters[0].voice_type)
             else:
@@ -111,11 +114,16 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
     else:
         events: EventList = EventList(events=[])
         for slide_no, audio_file in enumerate(audio_files):
-            events_anim: EventList = event_extractor.invoke(result_slide.html, slide_no + 1, audio_file)
+            first_speaker = (
+                speaker_left_right_map[result_script.scripts[slide_no].script[0].name]
+                if len(speaker_left_right_map) > 1
+                else None
+            )
+            events_anim: EventList = event_extractor.invoke(result_slide.html, slide_no + 1, audio_file, first_speaker)
             prev_sec = slide_page_event_sec[slide_no - 1] if slide_no > 0 else 0
             events.events.extend(
                 [
-                    Event(type=event.type, time_sec=prev_sec + event.time_sec, name=event.name)
+                    Event(type=event.type, time_sec=prev_sec + event.time_sec, name=event.name, target=event.target)
                     for event in events_anim.events
                 ]
             )
@@ -124,7 +132,12 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
         with open(work_dir / "events.json", "w") as f:
             f.write(events.model_dump_json())
 
-    play_config = PlayConfig(fps=config.fps, events=events, sprite_names=config.sprite_names)
+    play_config = PlayConfig(
+        fps=config.fps,
+        events=events,
+        sprite_names=config.sprite_names,
+        layout="topleft" if len(config.characters) == 1 else "center",
+    )
     logger.info(f"Play slide config: {play_config}")
     frames = await play_slide(result_slide.export_embed_images(), work_dir / "frames", play_config)
 

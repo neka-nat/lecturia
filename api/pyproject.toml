@@ -17,7 +17,7 @@ dependencies = [
     "langchain-google-genai>=2.1.4",
     "langchain-openai>=0.3.17",
     "loguru>=0.7.3",
-    "moviepy>=1.0.3",
+    "moviepy==1.0.3",
     "numpy>=2.2.4",
     "openai>=1.68.0",
     "pillow>=11.1.0",
@@ -26,7 +26,7 @@ dependencies = [
     "pydub>=0.25.1",
     "python-dotenv>=1.0.1",
     "tqdm>=4.67.1",
-    "tts-clients==0.4.0",
+    "tts-clients==0.4.1",
 ]
 
 [build-system]

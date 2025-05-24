@@ -2,6 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from .chains.slide_to_script import Speaker
 from .chains.tts import VoiceTypes
 
 
@@ -40,8 +41,8 @@ class MovieConfig(BaseModel):
         return [c.sprite_name for c in self.characters]
 
     @property
-    def speaker_names(self) -> list[str]:
-        return [c.name for c in self.characters]
+    def speakers(self) -> list[Speaker]:
+        return [Speaker(name=c.name, role=c.role) for c in self.characters]
 
     def get_voice_type(self, name: str) -> VoiceTypes:
         for c in self.characters:
