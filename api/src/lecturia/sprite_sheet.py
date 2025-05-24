@@ -7,7 +7,6 @@ from PIL import Image
 def align_sprite_sheet_with_baseline(
     in_image: Image.Image,
     grid: tuple[int, int] = (3, 3),
-    thresh: int = 25,
 ) -> Image.Image:
     sheet = in_image.convert("RGBA")
     sw, sh = sheet.size
@@ -33,7 +32,6 @@ def align_sprite_sheet_with_baseline(
     for r in range(rows):
         row_cx = cx_list[idx:idx+cols]
         row_bl = bl_list[idx:idx+cols]
-        tgt_cx = np.mean(row_cx)
         tgt_bl = np.max(row_bl)
 
         for j in range(cols):

@@ -11,7 +11,7 @@ from pydub import AudioSegment
 from .chains.event_extractor import create_event_extractor_chain
 from .chains.slide_maker import HtmlSlide, create_slide_maker_chain
 from .chains.slide_to_script import ScriptList, create_slide_to_script_chain
-from .chains.tts import create_tts_chain
+from .chains.tts import Talk, create_tts_chain
 from .models import Event, EventList, MovieConfig
 from .media import remove_long_silence
 from .slide_editor import edit_slide
@@ -24,9 +24,12 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
         work_dir = Path(temp_dir.name)
 
     work_dir.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Working directory: {work_dir}")
+    with open(work_dir / "movie_config.json", "w") as f:
+        f.write(config.model_dump_json())
 
     slide_maker = create_slide_maker_chain(config.web_search)
-    slide_to_script = create_slide_to_script_chain()
+    slide_to_script = create_slide_to_script_chain(config.speaker_names)
     tts = create_tts_chain()
     event_extractor = create_event_extractor_chain()
 
@@ -69,7 +72,19 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
     for script in result_script.scripts:
         audio_file = work_dir / f"audio_{script.slide_no}.mp3"
         if not audio_file.exists():
-            audio = tts.invoke(script.script, voice_type=config.voice_type)
+            if len(config.sprite_names) == 1:
+                text = script.script[0].content
+                audio = tts.invoke(text, voice_type=config.characters[0].voice_type)
+            else:
+                talks = [
+                    Talk(
+                        speaker_name=speaker.name,
+                        text=speaker.content,
+                        voice_type=config.get_voice_type(speaker.name),
+                    )
+                    for speaker in script.script
+                ]
+                audio = tts.multi_speaker_invoke(talks)
             audio.save_mp3(str(audio_file))
             removed_silence_audio = remove_long_silence(AudioSegment.from_mp3(audio_file))
             removed_silence_audio.export(audio_file, format="mp3")
@@ -109,7 +124,7 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
         with open(work_dir / "events.json", "w") as f:
             f.write(events.model_dump_json())
 
-    play_config = PlayConfig(fps=config.fps, events=events, sprite_name=config.sprite_name)
+    play_config = PlayConfig(fps=config.fps, events=events, sprite_names=config.sprite_names)
     logger.info(f"Play slide config: {play_config}")
     frames = await play_slide(result_slide.export_embed_images(), work_dir / "frames", play_config)
 

@@ -1,5 +1,6 @@
 import asyncio
 from pathlib import Path
+from typing import Literal
 
 from playwright.async_api import async_playwright
 from pydantic import BaseModel
@@ -13,7 +14,8 @@ class PlayConfig(BaseModel):
     events: EventList
     width: int = 1280
     height: int = 720
-    sprite_name: str | None = None
+    sprite_names: list[str] = []
+    layout: Literal["center", "topleft"] = "topleft"
 
 
 async def play_slide(html_content: str, output_dir: Path, config: PlayConfig) -> list[Path]:
@@ -23,7 +25,14 @@ async def play_slide(html_content: str, output_dir: Path, config: PlayConfig) ->
         [Event(type="start", time_sec=0)] + config.events.events[:-1],
         config.events.events,
     ):
-        event_durations_sec.append((next_event.type, next_event.time_sec - prev_event.time_sec, next_event.name))
+        event_durations_sec.append(
+            (
+                next_event.type,
+                next_event.time_sec - prev_event.time_sec,
+                next_event.name,
+                next_event.target,
+            )
+        )
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -38,13 +47,19 @@ async def play_slide(html_content: str, output_dir: Path, config: PlayConfig) ->
             await new Promise(res => { iframe.onload = () => res(); iframe.src = blobUrl; });
           }
         """, html_content)
-        if config.sprite_name:
-            await page.evaluate("src => window.setSprite(src)", config.sprite_name)
+        await page.evaluate("layout => window.setSlideLayout(layout)", config.layout)
+        if config.sprite_names:
+            # Right
+            await page.evaluate("src => window.setSprite(src, 'right')", config.sprite_names[0])
+        if len(config.sprite_names) > 1:
+            # Left
+            await page.evaluate("src => window.setSprite(src, 'left')", config.sprite_names[1])
+
 
         frames: list[Path] = []
-        total_frames = int(sum(event_duration for _, event_duration, _ in event_durations_sec) * fps)
+        total_frames = int(sum(event_duration for _, event_duration, _, _ in event_durations_sec) * fps)
         with tqdm(total=total_frames, desc="Generating frames") as pbar:
-            for event_index, (event_type, event_duration, event_name) in enumerate(event_durations_sec):
+            for event_index, (event_type, event_duration, event_name, event_target) in enumerate(event_durations_sec):
                 num_frames = int(event_duration * fps)
                 for frame_index in range(num_frames):
                     frame_path = output_dir / f"{event_index:03d}_{frame_index:05d}.png"
@@ -53,7 +68,14 @@ async def play_slide(html_content: str, output_dir: Path, config: PlayConfig) ->
                     pbar.update(1)
 
                 if event_index < len(event_durations_sec) - 1:
-                    await page.evaluate("ev => window.playSignal(ev)", {"type": event_type, "name": event_name})
+                    await page.evaluate(
+                        "ev => window.playSignal(ev)",
+                        {
+                            "type": event_type,
+                            "name": event_name,
+                            "target": event_target,
+                        },
+                    )
                     await asyncio.sleep(0.1)
 
         await context.close()

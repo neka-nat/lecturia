@@ -1,90 +1,120 @@
 <!DOCTYPE html><html lang="ja"><head><meta charset="utf-8" />
-<title>Slide-Player with Sprite</title>
+<title>Slide-Player</title>
 <style>
   html,body{margin:0;height:100%}
   #root{position:relative;width:100%;height:100vh;overflow:hidden}
-  #slide{width:90%;height:90%;border:1px solid gray}
-  #char{position:absolute;right:-4vw;bottom:0;width:30vw;aspect-ratio:1/1;
-        pointer-events:none;z-index:10}
+
+  #slide.layout-center {
+    position:absolute; top:5%; left:50%; transform:translateX(-50%);
+    width:80%; height:90%; border:1px solid gray;
+  }
+
+  #slide.layout-topleft {
+    position:absolute; top:0; left:0;
+    width:90%; height:90%;
+    border:1px solid gray;
+    transform: none;
+  }
+
+  .charCanvas{
+    position:absolute; bottom:0; width:30vw; aspect-ratio:1/1;
+    pointer-events:none; z-index:10;
+  }
+  #charLeft  { left:-4vw; }
+  #charRight { right:-4vw; }
 </style></head><body>
 <div id="root">
   <iframe id="slide"></iframe>
-  <canvas id="char"></canvas>
+  <canvas id="charLeft"  class="charCanvas"></canvas>
+  <canvas id="charRight" class="charCanvas"></canvas>
 </div>
 
 <script type="module">
 
-const slideFrame = document.getElementById('slide');
-const slideWin   = slideFrame.contentWindow;
-const canvas = document.getElementById('char');
-const ctx = canvas.getContext('2d');
+class Character {
+  constructor(canvas){
+    this.canvas = canvas;
+    this.ctx    = canvas.getContext('2d');
+    this.sprite = null;
+    this.curPose= 'idle';
+    this.animStarted = false;
+  }
+  static poses = { idle:[0,2], talk:[3,5], point:[6,8] };
+  static cols = 3;  static rows = 3;  static fps = 3;
 
-/* Hi-DPI */
-function fit(){const dpr=window.devicePixelRatio||1;
-  canvas.width=canvas.clientWidth*dpr;canvas.height=canvas.clientHeight*dpr;
-  ctx.resetTransform();ctx.scale(dpr,dpr);} fit();addEventListener('resize',fit);
-
-/* control sprite */
-let sprite = null, curPose='idle';
-const poses = {   // pose → [startFrame, endFrame] （0-based, inclusive）
-  idle:[0,2], talk:[3,5], point:[6,8]
-};
-const cols=3, rows=3, fps=3, total=cols*rows;
-let animStarted = false;
-
-function frameRect(i){const w=sprite.width/cols,h=sprite.height/rows;
-  return [(i%cols)*w, Math.floor(i/cols)*h, w, h];}
-
-function startDraw(){
-  let frame=0,last=0,interval=1000/fps;
-  requestAnimationFrame(function loop(t){
-    if(t-last>=interval){
-      ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
-      const [s,e]=poses[curPose]||poses.idle;
-      frame = (frame < s || frame > e)? s : frame+1>e? s : frame+1;
-      const [sx,sy,sw,sh]=frameRect(frame);
-      const margin = 6;
-      ctx.drawImage(sprite,sx+margin,sy+margin,sw-margin*2,sh-margin*2,0,0,canvas.clientWidth,canvas.clientHeight);
-      last=t;
-    }
+  fit(){
+    const dpr = window.devicePixelRatio||1;
+    this.canvas.width  = this.canvas.clientWidth  * dpr;
+    this.canvas.height = this.canvas.clientHeight * dpr;
+    this.ctx.resetTransform(); this.ctx.scale(dpr,dpr);
+  }
+  frameRect(i){
+    const w=this.sprite.width/Character.cols,
+          h=this.sprite.height/Character.rows;
+    return [(i%Character.cols)*w, Math.floor(i/Character.cols)*h, w, h];
+  }
+  startDraw(){
+    let frame=0,last=0,interval=1000/Character.fps;
+    const loop = (t)=>{
+      if(t-last>=interval && this.sprite){
+        this.ctx.clearRect(0,0,this.canvas.clientWidth,this.canvas.clientHeight);
+        const [s,e]=Character.poses[this.curPose]||Character.poses.idle;
+        frame = (frame<s||frame>e)?s : frame+1>e? s : frame+1;
+        const [sx,sy,sw,sh]=this.frameRect(frame);
+        const m=6;
+        this.ctx.drawImage(this.sprite,sx+m,sy+m,sw-m*2,sh-m*2,
+                           0,0,this.canvas.clientWidth,this.canvas.clientHeight);
+        last=t;
+      }
+      requestAnimationFrame(loop);
+    };
     requestAnimationFrame(loop);
-  });
+  }
+  async setSprite(src){
+    const img=new Image(); img.src=src; await img.decode();
+    this.sprite=img; this.curPose='idle';
+    if(!this.animStarted){ this.startDraw(); this.animStarted=true; }
+  }
 }
 
-window.setSprite = async function (src) {
-  try {
-    const img = new Image();
-    img.src = src;
-    await img.decode();
+const charMap = {
+  left : new Character(document.getElementById('charLeft')),
+  right: new Character(document.getElementById('charRight'))
+};
+window.addEventListener('resize', ()=>Object.values(charMap).forEach(c=>c.fit()));
+Object.values(charMap).forEach(c=>c.fit());
 
-    sprite = img;
-    curPose = 'idle';
+const slideFrame = document.getElementById('slide');
+const slideWin   = slideFrame.contentWindow;
 
-    if (!animStarted) {
-      startDraw();
-      animStarted = true;
-    }
-    console.log('[sprite] switched to', src);
-  } catch (e) {
-    console.error('[sprite] failed:', e);
+window.setSprite = async (src, target='right')=>{
+  const actor = charMap[target];
+  await actor.setSprite(src);
+}
+
+window.setSlideLayout = function(layout){
+  slideFrame.classList.remove('layout-center','layout-topleft');
+
+  if (typeof layout === 'string') {
+    if (layout === 'topleft') slideFrame.classList.add('layout-topleft');
+    else slideFrame.classList.add('layout-center');
+  } else {
+    Object.assign(slideFrame.style, layout);
   }
+  console.log('[layout] slide =>', layout);
 };
 
-/* signal receiver */
-window.playSignal = async ({type, ...p})=>{
+window.playSignal = async ({type, target='right', ...p})=>{
+  const actor = charMap[target] || charMap.right;
   switch(type){
-    case 'slideNext':
-      slideWin.postMessage('slide-next', '*');
-      break;
-    case 'slidePrev':
-      slideWin.postMessage('slide-prev', '*');
-      break;
-    case 'slideStep':
-      slideWin.postMessage('slide-step', '*');
-      break;
-    case 'pose':      curPose=p.name||'idle'; break;
-    case 'sprite':    await window.setSprite(p.src);       break;
+    case 'slideNext': slideWin.postMessage('slide-next','*'); break;
+    case 'slidePrev': slideWin.postMessage('slide-prev','*'); break;
+    case 'slideStep': slideWin.postMessage('slide-step','*'); break;
+
+    case 'pose':    actor.curPose = p.name || 'idle'; break;
+    case 'sprite':  await actor.setSprite(p.src);     break;
   }
 };
+
 </script>
 </body></html>

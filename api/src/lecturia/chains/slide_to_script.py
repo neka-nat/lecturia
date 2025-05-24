@@ -8,9 +8,14 @@ from loguru import logger
 from pydantic import BaseModel, Field
 
 
+class Speaker(BaseModel):
+    name: str = Field(default="", description="スライドの台本の発話者の名前")
+    content: str = Field(description="発話内容")
+
+
 class Script(BaseModel):
     slide_no: int = Field(description="スライドのページ番号")
-    script: str = Field(description="スライドの台本")
+    script: list[Speaker] = Field(description="スライドの台本")
 
 
 class ScriptList(BaseModel):
@@ -22,27 +27,16 @@ _prompt_template = """
 * スライドの雰囲気に合わせた話し方になるようにしてください。
 * スライドの台本内でダブルクォーテーションを含む文字列はエスケープしてください。
 * そのまま機械発話に読ませることを想定して、台本を書いてください。
+{multiple_speakers_rules}
 
 ## スライド資料
 ```html
-{slides}
+{{slides}}
 ```
 
 ## 出力形式
 ```json
-{{
-  "scripts": [
-    {{
-      "slide_no": 1,
-      "script": "<スライド1の台本>"
-    }},
-    {{
-      "slide_no": 2,
-      "script": "<スライド2の台本>"
-    }},
-    ...
-  ]
-}}
+{output_format}
 ```
 
 ## ここから本番
@@ -50,12 +44,103 @@ _prompt_template = """
 出力:
 """
 
-def create_slide_to_script_chain(use_web_search: bool = True, num_max_web_search: int = 2) -> Runnable:
+
+_multiple_speakers_rules = """
+* 台本内で話者は{speaker_name0}と{speaker_name1}の2人います。
+* それぞれが会話しながら進行していくように台本を作成してください。
+"""
+
+
+def build_output_format_prompt(speaker_names: list[str]) -> str:
+    if len(speaker_names) == 1:
+        return (
+            "{{"
+            "  \"scripts\": ["
+            "    {{"
+            "      \"slide_no\": 1,"
+            "      \"script\": [{{"
+            "        \"content\": \"<スライド1の台本>\"}}"
+            "      ]"
+            "    }},"
+            "    {{"
+            "      \"slide_no\": 2,"
+            "      \"script\": [{{"
+            "        \"content\": \"<スライド2の台本>\"}}"
+            "      ]"
+            "    }},"
+            "    ..."
+            "  ]"
+            "}}"
+        )
+    elif len(speaker_names) == 2:
+        return (
+            "{{"
+            "  \"scripts\": ["
+            "    {{"
+            "      \"slide_no\": 1,"
+            "      \"script\": ["
+            "        {{"
+            f"          \"name\": \"{speaker_names[0]}\","
+            f"          \"content\": \"<{speaker_names[0]}の会話1>\""
+            "        }},"
+            "        {{"
+            f"          \"name\": \"{speaker_names[1]}\","
+            f"          \"content\": \"<{speaker_names[1]}の会話1>\""
+            "        }},"
+            "        {{"
+            f"          \"name\": \"{speaker_names[0]}\","
+            f"          \"content\": \"<{speaker_names[0]}の会話2>\""
+            "        }},"
+            "        {{"
+            f"          \"name\": \"{speaker_names[1]}\","
+            f"          \"content\": \"<{speaker_names[1]}の会話2>\""
+            "        }},"
+            "        ..."
+            "      ]"
+            "    }},"
+            "    {{"
+            "      \"slide_no\": 2,"
+            "      \"script\": ["
+            "        {{"
+            f"          \"name\": \"{speaker_names[0]}\","
+            f"          \"content\": \"<{speaker_names[0]}の会話1>\""
+            "        }},"
+            "        {{"
+            f"          \"name\": \"{speaker_names[1]}\","
+            f"          \"content\": \"<{speaker_names[1]}の会話1>\""
+            "        }},"
+            "        {{"
+            f"          \"name\": \"{speaker_names[0]}\","
+            f"          \"content\": \"<{speaker_names[0]}の会話2>\""
+            "        }},"
+            "        {{"
+            f"          \"name\": \"{speaker_names[1]}\","
+            f"          \"content\": \"<{speaker_names[1]}の会話2>\""
+            "        }},"
+            "        ..."
+            "      ]"
+            "    }},"
+            "    ...\n"
+            "  ]\n"
+            "}}\n"
+        )
+    else:
+        raise ValueError(f"Invalid number of speaker names: {len(speaker_names)}")
+
+
+def create_slide_to_script_chain(speaker_names: list[str], use_web_search: bool = True, num_max_web_search: int = 2) -> Runnable:
     prompt_msgs = [
         SystemMessage(
             content="あなたはプレゼンの台本を作成するプロフェッショナルです。与えられたhtml形式のスライド資料からプレゼンの台本を作成してください。"
         ),
-        HumanMessagePromptTemplate.from_template(_prompt_template),
+        HumanMessagePromptTemplate.from_template(
+            _prompt_template.format(
+                multiple_speakers_rules=_multiple_speakers_rules.format(
+                    speaker_name0=speaker_names[0], speaker_name1=speaker_names[1]
+                ) if len(speaker_names) > 1 else "",
+                output_format=build_output_format_prompt(speaker_names),
+            )
+        ),
     ]
     prompt = ChatPromptTemplate(messages=prompt_msgs)
     llm = ChatAnthropic(

@@ -4,8 +4,12 @@ from langchain_core.runnables import Runnable
 from openai import OpenAI
 from pydantic import BaseModel
 from tts_clients.google.client import GoogleTTSClient
-from tts_clients.google.models import TextToAudioRequest, TextToAudioResponse
-
+from tts_clients.google.models import (
+    MultiSpeakerTextToAudioRequest,
+    SpeakerTextToAudioRequest,
+    TextToAudioRequest,
+    TextToAudioResponse,
+)
 
 class VoiceType(BaseModel):
     name: str
@@ -43,6 +47,12 @@ _voice_types_map = {
 VoiceTypes = Literal["woman", "cat", "senior_male"]
 
 
+class Talk(BaseModel):
+    speaker_name: str
+    text: str
+    voice_type: VoiceTypes
+
+
 class TTS(Runnable):
     def __init__(self):
         self.client = OpenAI()
@@ -57,6 +67,23 @@ class TTS(Runnable):
         client = GoogleTTSClient()
         response = client.text_to_audio(req)
         return response
+
+    def multi_speaker_invoke(self, talks: list[Talk]) -> TextToAudioResponse:
+        req = MultiSpeakerTextToAudioRequest(
+            speakers=[
+                SpeakerTextToAudioRequest(
+                    speaker_name=talk.speaker_name,
+                    text=talk.text,
+                    voice_name=_voice_types_map[talk.voice_type].name,
+                )
+                for talk in talks
+            ],
+            instructions="TTS the following conversation between two speakers, " + "and ".join([f"{talk.speaker_name}" for talk in talks]) + ".",
+        )
+        client = GoogleTTSClient()
+        response = client.multi_speaker_text_to_audio(req)
+        return response
+
 
 
 def create_tts_chain() -> Runnable:

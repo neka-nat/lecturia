@@ -754,7 +754,7 @@ requires-dist = [
     { name = "pydub", specifier = ">=0.25.1" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "tqdm", specifier = ">=4.67.1" },
-    { name = "tts-clients", specifier = "==0.3.0" },
+    { name = "tts-clients", specifier = "==0.4.0" },
 ]
 
 [[package]]
@@ -1445,7 +1445,7 @@ wheels = [
 
 [[package]]
 name = "tts-clients"
-version = "0.3.0"
+version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "google-genai" },
@@ -1455,9 +1455,9 @@ dependencies = [
     { name = "pydub" },
     { name = "python-dotenv" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/99/3c/a589ddec82088201c38d5a617444bc6e75d6a058ab747e61b833e47d212b/tts_clients-0.3.0.tar.gz", hash = "sha256:3e43b544cb0c3c137badee5a1a4edd7bf65d9138d02631577335b20726b4916e", size = 22280 }
+sdist = { url = "https://files.pythonhosted.org/packages/80/26/3640f1be7b9c970aedc185530d5583759cc55072419e4764930fb70bdc3b/tts_clients-0.4.0.tar.gz", hash = "sha256:9522b2a6325247d9a9e2ba9eabdd0aefaaae0f83cf39c22a6b35ca0550d93cb9", size = 22664 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/38/c7/4ec2dca51f33a5e8220bb0738f9a4decab6c0744946eaae9bacdd0c51c7b/tts_clients-0.3.0-py3-none-any.whl", hash = "sha256:477721456045f44e5b184600ec7f77b8f3d767f499bde0097f942163be517111", size = 6605 },
+    { url = "https://files.pythonhosted.org/packages/a6/65/03cdfb209a9a483e1d5973dfb4e982300673315de9b56a61432d2406e708/tts_clients-0.4.0-py3-none-any.whl", hash = "sha256:a326a571f9c7d7105faa98ceb5501a2742c79b8159a20b00ae38d486b7dc0456", size = 6926 },
 ]
 
 [[package]]
