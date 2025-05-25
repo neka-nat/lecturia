@@ -41,10 +41,11 @@ _voice_types_map = {
     "woman": VoiceType(name="Autonoe", instructions=_instructions_woman),
     "cat": VoiceType(name="Orus", instructions=_instructions_cat),
     "senior_male": VoiceType(name="Charon", instructions=_instructions_senior_male),
+    "man": VoiceType(name="Rasalgethi", instructions=""),
 }
 
 
-VoiceTypes = Literal["woman", "cat", "senior_male"]
+VoiceTypes = Literal["woman", "cat", "senior_male", "man"]
 
 
 class Talk(BaseModel):

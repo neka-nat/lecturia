@@ -7,6 +7,15 @@ from .chains.tts import VoiceTypes
 
 
 class Event(BaseModel):
+    """
+    イベントは、スライドの表示、キャラクターの表情やポーズ、音声の再生などを表す。
+
+    Args:
+        type: イベントの種類
+        time_sec: イベントの発生時間（秒）
+        name: イベントの名前
+        target: イベントの対象となるキャラクター
+    """
     type: Literal["start", "pose", "slideNext", "slidePrev", "slideStep", "end"]
     time_sec: float
     name: str | None = None
