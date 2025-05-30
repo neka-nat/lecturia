@@ -19,4 +19,4 @@ COPY . /app
 RUN uv pip install -e . --break-system-packages --system
 RUN playwright install
 
-CMD ["python", "examples/pipeline_test.py"]
+CMD ["fastapi", "run", "src/lecturia/server.py"]

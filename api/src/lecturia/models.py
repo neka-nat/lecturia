@@ -1,3 +1,4 @@
+import uuid
 from typing import Literal
 
 from pydantic import BaseModel
@@ -58,3 +59,12 @@ class MovieConfig(BaseModel):
             if c.name == name:
                 return c.voice_type
         raise ValueError(f"Voice type not found: {name}")
+
+
+class Manifest(BaseModel):
+    id: uuid.UUID
+    title: str
+    slide_url: str
+    audio_url: str
+    events_url: str
+    sprites_url: dict[str, str]
