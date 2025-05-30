@@ -1,7 +1,8 @@
 import uuid
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
 
 from .chains.slide_to_script import Speaker
 from .chains.tts import VoiceTypes
@@ -67,4 +68,11 @@ class Manifest(BaseModel):
     slide_url: str
     audio_url: str
     events_url: str
-    sprites_url: dict[str, str]
+    sprites: dict[str, str]  # base64 encoded image
+    slide_width: int
+    slide_height: int
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+    )
