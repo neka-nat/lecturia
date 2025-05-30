@@ -7,63 +7,57 @@ import { CharacterCanvas } from './CharacterCanvas';
 
 type Props = {
   manifest: {
-    slideUrl: string;
-    audioUrl: string;
-    events: Event[];
-    sprites: Record<'left' | 'right', string>;
+    slideUrl:  string;
+    audioUrl:  string;
+    events:    Event[];
+    sprites:   Record<'left' | 'right', string>;
   };
 };
 
 export const Player: React.FC<Props> = ({ manifest }) => {
   const audioRef = useRef<ReactPlayer>(null);
-  const [iframeLoaded, setIframeLoaded] = useState(false);
-
-  // slide iframe の postMessage 先を保持
+  const [ready, setReady] = useState(false);
   const slideWin = useRef<Window>();
 
-  const playSignal = useCallback(
-    (ev: Event) => {
-      if (!slideWin.current) return;
-      switch (ev.type) {
-        case 'slideNext':
-        case 'slidePrev':
-        case 'slideStep':
-          slideWin.current.postMessage(ev.type.replace('slide', 'slide-'), '*');
-          break;
-        case 'pose':
-          window.dispatchEvent(new CustomEvent('pose', { detail: ev }));
-          break;
-        // quiz などは別途
-      }
-    },
-    [],
-  );
+  /* -------- playSignal -------- */
+  const playSignal = useCallback((ev: Event) => {
+    if (!slideWin.current) return;
+    if (ev.type.startsWith('slide')) {
+      // slideNext → slide-next
+      slideWin.current.postMessage(ev.type.replace(/[A-Z]/, (c) => '-' + c.toLowerCase()), '*');
+    } else if (ev.type === 'pose') {
+      window.dispatchEvent(new CustomEvent('pose', { detail: ev }));
+    }
+  }, []);
 
+  /* -------- timeline -------- */
   useTimeline(
     audioRef.current?.getInternalPlayer() as HTMLAudioElement,
     manifest.events,
     playSignal,
   );
 
+  /* -------- DOM -------- */
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {/* slide */}
       <iframe
-        src={manifest.slideUrl}
+        src={`${process.env.LECTURIA_API_ORIGIN}${manifest.slideUrl}`}
         className="absolute top-5 left-1/2 -translate-x-1/2 w-4/5 h-4/5 border"
-        ref={(el) => (slideWin.current = el?.contentWindow ?? undefined)}
-        onLoad={() => setIframeLoaded(true)}
+        ref={(el) => {
+          slideWin.current = el?.contentWindow ?? undefined;
+        }}
+        onLoad={() => setReady(true)}
       />
 
       {/* characters */}
-      <CharacterCanvas side="left" />
-      <CharacterCanvas side="right" />
+      {manifest.sprites.left && <CharacterCanvas side="left"  src={manifest.sprites.left}  />}
+      {manifest.sprites.right && <CharacterCanvas side="right" src={manifest.sprites.right} />}
 
-      {/* audio (react-player) */}
-      {iframeLoaded && (
+      {/* audio */}
+      {ready && (
         <ReactPlayer
           ref={audioRef}
-          url={manifest.audioUrl}
+          url={`${process.env.LECTURIA_API_ORIGIN}${manifest.audioUrl}`}
           playing
           controls={false}
           height={0}

@@ -15,6 +15,10 @@ export const useTimeline = (
   const idx = useRef(0);
 
   useEffect(() => {
+    idx.current = 0;
+  }, [events, audio]);
+
+  useEffect(() => {
     if (!audio) return;
     const tick = () => {
       const t = audio.currentTime;

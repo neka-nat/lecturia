@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #__next {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  @apply bg-neutral-900 text-white antialiased overflow-hidden;
+}
+
+body::-webkit-scrollbar { display: none; }
+
+iframe { border: none; }
