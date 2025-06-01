@@ -70,7 +70,14 @@ export const Player: React.FC<Props> = ({ manifest }) => {
       {/* slide */}
       <iframe
         src={`${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}${manifest.slideUrl}`}
-        className="absolute inset-0"
+        className="absolute border border-gray-400"
+        style={{
+          top: '5%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '80%',
+          height: '90%'
+        }}
         ref={(el) => {
           slideRef.current = el;
           slideWin.current = el?.contentWindow ?? undefined;
