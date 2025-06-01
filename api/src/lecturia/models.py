@@ -69,6 +69,8 @@ class Manifest(BaseModel):
     audio_url: str
     events_url: str
     sprites: dict[str, str]  # base64 encoded image
+    slide_width: int
+    slide_height: int
 
     model_config = ConfigDict(
         alias_generator=to_camel,

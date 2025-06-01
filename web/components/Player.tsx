@@ -11,33 +11,28 @@ type Props = {
     audioUrl:  string;
     events:    Event[];
     sprites:   Record<'left' | 'right', string>;
+    slideWidth: number;
+    slideHeight: number;
   };
 };
 
-function fitSlide(iframe: HTMLIFrameElement | null) {
-  if (!iframe || !iframe.contentWindow) return;
+function fitSlide(iframe: HTMLIFrameElement | null, w: number, h: number) {
+  if (!iframe) return;
+  const cw = iframe.clientWidth;
+  const ch = iframe.clientHeight;
+  const scale = Math.min(cw / w, ch / h);
 
-  const doc = iframe.contentWindow.document;
-  const slideW = doc.body.scrollWidth  || 1280; // fallback
-  const slideH = doc.body.scrollHeight || 720;
-
-  const parent = iframe.parentElement!;
-  const cw = parent.clientWidth;
-  const ch = parent.clientHeight;
-
-  const scale = Math.min(cw / slideW, ch / slideH);
-
-  iframe.style.width  = `${slideW}px`;
-  iframe.style.height = `${slideH}px`;
   iframe.style.transformOrigin = 'top left';
   iframe.style.transform = `scale(${scale})`;
+  iframe.style.width  = `${w}px`;
+  iframe.style.height = `${h}px`;
 }
 
 export const Player: React.FC<Props> = ({ manifest }) => {
   const slideRef = useRef<HTMLIFrameElement>(null);
   const audioRef = useRef<ReactPlayer>(null);
   const [ready, setReady] = useState(false);
-  const slideWin = useRef<Window>();
+  const slideWin = useRef<Window | undefined>(undefined);
 
   /* -------- playSignal -------- */
   const playSignal = useCallback((ev: Event) => {
@@ -52,7 +47,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
 
 
   useEffect(() => {
-    const onResize = () => fitSlide(slideWin.current?.document.body);
+    const onResize = () => fitSlide(slideRef.current, manifest.slideWidth, manifest.slideHeight);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
@@ -84,7 +79,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
         }}
         onLoad={(el) => {
           setReady(true);
-          fitSlide(el.currentTarget);
+          fitSlide(el.currentTarget, manifest.slideWidth, manifest.slideHeight);
         }}
       />
 

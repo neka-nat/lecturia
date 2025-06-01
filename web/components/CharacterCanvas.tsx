@@ -18,7 +18,7 @@ type Props = {
 
 export const CharacterCanvas = ({ side, src }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const spriteRef = useRef<HTMLImageElement>();
+  const spriteRef = useRef<HTMLImageElement | undefined>(undefined);
   const [pose, setPose] = useState<'idle' | 'talk' | 'point'>('idle');
 
   /* ---------- 画像ロード ---------- */
