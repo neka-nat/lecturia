@@ -88,12 +88,15 @@ export const CharacterCanvas = ({ side, src }: Props) => {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute bottom-0 aspect-square pointer-events-none"
+      className="absolute pointer-events-none"
       style={{ 
-        [side === 'left' ? 'left' : 'right']: '-4vw', 
-        width: '30vw',
-        zIndex: 10
-      } as any}
+        bottom: '5%',
+        ...(side === 'left' ? { left: '65%' } : { right: '5%' }),
+        width: '20%',
+        height: '20%',
+        aspectRatio: '1/1',
+        zIndex: 20
+      }}
     />
   );
 };

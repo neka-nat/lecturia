@@ -18,11 +18,14 @@ type Props = {
 
 function fitSlide(iframe: HTMLIFrameElement | null, w: number, h: number) {
   if (!iframe) return;
-  const cw = iframe.clientWidth;
-  const ch = iframe.clientHeight;
+  const container = iframe.parentElement;
+  if (!container) return;
+
+  const cw = container.clientWidth;
+  const ch = container.clientHeight;
   const scale = Math.min(cw / w, ch / h);
 
-  iframe.style.transformOrigin = 'top left';
+  iframe.style.transformOrigin = 'center';
   iframe.style.transform = `scale(${scale})`;
   iframe.style.width  = `${w}px`;
   iframe.style.height = `${h}px`;
@@ -50,7 +53,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     const onResize = () => fitSlide(slideRef.current, manifest.slideWidth, manifest.slideHeight);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
-  }, []);
+  }, [manifest.slideWidth, manifest.slideHeight]);
 
   /* -------- timeline -------- */
   useTimeline(
@@ -61,27 +64,30 @@ export const Player: React.FC<Props> = ({ manifest }) => {
 
   /* -------- DOM -------- */
   return (
-    <div className="relative w-full h-screen overflow-hidden">
-      {/* slide */}
-      <iframe
-        src={`${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}${manifest.slideUrl}`}
-        className="absolute border border-gray-400"
+    <div className="relative w-full h-screen overflow-hidden bg-gray-100">
+      {/* スライドコンテナ */}
+      <div 
+        className="absolute flex items-center justify-center"
         style={{
           top: '5%',
-          left: '50%',
-          transform: 'translateX(-50%)',
+          left: '10%',
           width: '80%',
-          height: '90%'
+          height: '80%'
         }}
-        ref={(el) => {
-          slideRef.current = el;
-          slideWin.current = el?.contentWindow ?? undefined;
-        }}
-        onLoad={(el) => {
-          setReady(true);
-          fitSlide(el.currentTarget, manifest.slideWidth, manifest.slideHeight);
-        }}
-      />
+      >
+        <iframe
+          src={`${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}${manifest.slideUrl}`}
+          className="border border-gray-400 bg-white"
+          ref={(el) => {
+            slideRef.current = el;
+            slideWin.current = el?.contentWindow ?? undefined;
+          }}
+          onLoad={(el) => {
+            setReady(true);
+            fitSlide(el.currentTarget, manifest.slideWidth, manifest.slideHeight);
+          }}
+        />
+      </div>
 
       {/* characters */}
       {manifest.sprites.left  && (
