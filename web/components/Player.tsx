@@ -67,15 +67,17 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     <div className="relative w-full h-screen overflow-hidden bg-gray-100">
       {/* スライドコンテナ */}
       <div 
-        className="absolute inset-0"
+        className="absolute flex items-center justify-center"
         style={{
-          width: '100%',
-          height: '100%'
+          top: '5%',
+          left: '5%',
+          width: '70%',
+          height: '90%'
         }}
       >
         <iframe
           src={`${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}${manifest.slideUrl}`}
-          className="w-full h-full bg-white"
+          className="w-full h-full border border-gray-400 bg-white"
           ref={(el) => {
             slideRef.current = el;
             slideWin.current = el?.contentWindow ?? undefined;
