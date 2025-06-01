@@ -89,7 +89,11 @@ export const CharacterCanvas = ({ side, src }: Props) => {
     <canvas
       ref={canvasRef}
       className="absolute bottom-0 aspect-square pointer-events-none"
-      style={{ [side === 'left' ? 'left' : 'right']: '-4vw', width: '30vw' } as any}
+      style={{ 
+        [side === 'left' ? 'left' : 'right']: '-4vw', 
+        width: '30vw',
+        zIndex: 10
+      } as any}
     />
   );
 };
