@@ -6,10 +6,18 @@ export default async function LecturePage({
 }: {
   params: { id: string };
 }) {
-  const r = await fetch(`${process.env.LECTURIA_API_ORIGIN}/api/lectures/${params.id}/manifest`);
+  const { id } = await params;
+  const r = await fetch(
+    `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}/api/lectures/${id}/manifest`,
+    { cache: 'no-store' },
+  );
   if (!r.ok) return notFound();
+
   const manifest = await r.json();
-  const eventsResp = await fetch(`${process.env.LECTURIA_API_ORIGIN}${manifest.eventsUrl}`);
+  const eventsResp = await fetch(
+    `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}${manifest.eventsUrl}`,
+    { cache: 'no-store' },
+  );
   manifest.events = await eventsResp.json();
 
   return <Player manifest={manifest} />;

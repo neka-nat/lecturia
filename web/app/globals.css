@@ -8,7 +8,7 @@ html, body, #__next {
 }
 
 body {
-  @apply bg-neutral-900 text-white antialiased overflow-hidden;
+  @apply bg-gray-900 text-white antialiased overflow-hidden;
 }
 
 body::-webkit-scrollbar { display: none; }
