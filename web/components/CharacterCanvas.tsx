@@ -90,10 +90,10 @@ export const CharacterCanvas = ({ side, src }: Props) => {
       ref={canvasRef}
       className="absolute pointer-events-none"
       style={{ 
-        bottom: '5%',
-        ...(side === 'left' ? { left: '65%' } : { right: '5%' }),
-        width: '20%',
-        height: '20%',
+        bottom: '2%',
+        right: '2%',
+        width: '25%',
+        height: '25%',
         aspectRatio: '1/1',
         zIndex: 20
       }}
