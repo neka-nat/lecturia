@@ -98,11 +98,23 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     };
   }, [playSignal]);
 
-  useTimeline(audioRef.current ?? null, manifest.events, playSignal);
+  const { reset: resetTimeline } = useTimeline(
+    audioRef.current ?? null,
+    manifest.events,
+    playSignal,
+  );
 
-  /* Guarantee user interaction before audio play (autoplay policies) */
-  const handlePlay = () => {
-    audioRef.current?.play();
+  const handlePlay = () => audioRef.current?.play();
+  const handlePause = () => audioRef.current?.pause();
+  const handleStop = () => {
+    const a = audioRef.current;
+    if (!a) return;
+    a.pause();
+    a.currentTime = 0;
+    resetTimeline();
+    if (iframeRef.current) iframeRef.current.src = manifest.slideUrl;
+    charLeft.current?.setPose('idle');
+    charRight.current?.setPose('idle');
   };
 
   return (
@@ -159,13 +171,11 @@ export const Player: React.FC<Props> = ({ manifest }) => {
       {/* Hidden audio element (controls shown for debug) */}
       <audio ref={audioRef} src={manifest.audioUrl} preload="auto" />
 
-      {/* Simple overlay button to start playback (optional) */}
-      <button
-        onClick={handlePlay}
-        style={{ position: 'absolute', top: 10, right: 10, zIndex: 20 }}
-      >
-        ▶︎ Play
-      </button>
+      <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 20 }}>
+        <button onClick={handlePlay}>▶︎ Play</button>{' '}
+        <button onClick={handlePause}>⏸ Pause</button>{' '}
+        <button onClick={handleStop}>◼ Stop</button>
+      </div>
     </div>
   );
 };
