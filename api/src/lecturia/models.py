@@ -66,7 +66,7 @@ class Manifest(BaseModel):
     id: uuid.UUID
     title: str
     slide_url: str
-    audio_url: str
+    audio_urls: list[str]
     events_url: str
     sprites: dict[str, str]  # base64 encoded image
     slide_width: int

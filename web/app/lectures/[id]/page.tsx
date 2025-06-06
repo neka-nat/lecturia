@@ -21,7 +21,7 @@ export default async function LecturePage({
   const { events } = await eventsResp.json();
   manifest.events = events;
   manifest.slideUrl = `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}${manifest.slideUrl}`;
-  manifest.audioUrl = `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}${manifest.audioUrl}`;
+  manifest.audioUrls = manifest.audioUrls.map((url: string) => `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}${url}`);
 
   return <Player manifest={manifest} />;
 }

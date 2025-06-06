@@ -25,7 +25,7 @@ async def get_lecture_manifest(lecture_id: str) -> Manifest:
         id=test_id,
         title="test",
         slide_url=f"/results/{test_id}/result_slide.html",
-        audio_url=f"/results/{test_id}/audio_1.mp3",
+        audio_urls=[f"/results/{test_id}/audio_{i + 1}.mp3" for i in range(8)],
         events_url=f"/results/{test_id}/events.json",
         sprites=sprites,
         slide_width=1280,
