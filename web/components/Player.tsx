@@ -13,236 +13,169 @@ import { Character } from '@/utils/character';
 
 export type Manifest = {
   slideUrl: string;
-  audioUrls: string[];
-  events: Event[];
-  sprites: Record<'left' | 'right', string>; // base64 data‑urls (may be empty strings)
+  audioUrls: string[];        // page‑wise audios
+  events: Event[];            // timeline (absolute)
+  sprites: Record<'left'|'right', string>;
   slideWidth: number;
   slideHeight: number;
 };
 
-interface Props {
-  manifest: Manifest;
-}
+interface Props { manifest: Manifest; }
 
 export const Player: React.FC<Props> = ({ manifest }) => {
-  /* ---------------- refs ---------------- */
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const leftCanvasRef = useRef<HTMLCanvasElement>(null);
+  /* refs & state */
+  const iframeRef      = useRef<HTMLIFrameElement>(null);
+  const leftCanvasRef  = useRef<HTMLCanvasElement>(null);
   const rightCanvasRef = useRef<HTMLCanvasElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioRef       = useRef<HTMLAudioElement>(null);
 
-  /* ---------------- characters ---------------- */
-  const charLeft = useRef<Character | null>(null);
-  const charRight = useRef<Character | null>(null);
+  const charLeft  = useRef<Character|null>(null);
+  const charRight = useRef<Character|null>(null);
 
-  /* ---------------- state ---------------- */
-  const [slideReady, setSlideReady] = useState(false);
-  const [pageIdx, setPageIdx] = useState(0); // 0‑based
+  const [pageIdx, setPageIdx]   = useState(0);   // current page (0‑based)
+  const [slideReady, setReady]  = useState(false);
+  const hasInteracted           = useRef(false); // ▶︎ pressed once?
 
-  /**
-   * イベントをスライド単位に分割 => [ [slide1 events ...], [slide2 events ...], ... ]
-   */
-  const slideEvents = useMemo(() => {
-    const arr: Event[][] = [];
-    let cur: Event[] = [];
-    manifest.events.forEach((ev) => {
-      if (ev.type === "slideNext") {
-        arr.push(cur);
-        cur = [];
+  /* -------------------------------------------------------------
+     Helper: postMessage to iframe
+  ------------------------------------------------------------- */
+  const postToSlide = useCallback((msg:string)=>{
+    iframeRef.current?.contentWindow?.postMessage(msg,'*');
+  },[]);
+
+  /* -------------------------------------------------------------
+     Split events by slideNext  +  🌟 re‑base time_sec 🌟
+  ------------------------------------------------------------- */
+  const eventsPages = useMemo<Event[][]>(()=>{
+    const pages: Event[][] = [];
+    let buf: Event[] = [];
+    let base = 0;                       // start time of current page
+
+    manifest.events.forEach(ev=>{
+      if (ev.type === 'slideNext') {
+        pages.push(buf);
+        buf = [];
+        base = ev.time_sec;             // next page start
       } else {
-        cur.push(ev);
+        buf.push({ ...ev, time_sec: ev.time_sec - base }); // ⏱️ relative
       }
     });
-    arr.push(cur); // last slide
-    return arr;
-  }, [manifest.events]);
+    pages.push(buf);                    // last page
+    return pages;
+  },[manifest.events]);
 
-  const postToSlide = useCallback((msg: string) => {
-    iframeRef.current?.contentWindow?.postMessage(msg, "*");
-  }, []);
-
-  /**
-   * audio ソースを page に合わせて切替
-   */
-  const changeAudio = useCallback(
-    (newPage: number) => {
-      const a = audioRef.current;
-      if (!a) return;
-
-      // 範囲ガード
-      if (newPage < 0 || newPage >= manifest.audioUrls.length) return;
-
-      a.pause();
-      a.src = manifest.audioUrls[newPage];
-      a.load();
-      a.currentTime = 0;
-      setPageIdx(newPage);
-    },
-    [manifest.audioUrls]
-  );
-
-  const { reset: resetTimeline } = useTimeline(
-    slideReady && audioRef.current ? audioRef.current : null,
-    slideEvents[pageIdx] ?? [],
-    (ev) => {
-      playSignal(ev);
-    }
-  );
-
-  useLayoutEffect(() => {
-    if (leftCanvasRef.current && !charLeft.current) {
+  /* -------------------------------------------------------------
+     Character canvas bootstrap
+  ------------------------------------------------------------- */
+  useLayoutEffect(()=>{
+    if (leftCanvasRef.current && !charLeft.current){
       charLeft.current = new Character(leftCanvasRef.current);
     }
-    if (rightCanvasRef.current && !charRight.current) {
+    if (rightCanvasRef.current && !charRight.current){
       charRight.current = new Character(rightCanvasRef.current);
     }
-  }, []);
+  },[]);
 
-  /* load initial sprites */
-  useEffect(() => {
-    (async () => {
-      if (manifest.sprites.right && charRight.current) {
+  /* load default sprites */
+  useEffect(()=>{
+    (async()=>{
+      if (manifest.sprites.right && charRight.current){
         await charRight.current.setSprite(manifest.sprites.right);
       }
-      if (manifest.sprites.left && charLeft.current) {
+      if (manifest.sprites.left && charLeft.current){
         await charLeft.current.setSprite(manifest.sprites.left);
       }
     })();
-  }, [manifest.sprites]);
+  },[manifest.sprites]);
 
-  const handlePlay = () => {
-    if (!slideReady) return;
-    audioRef.current?.play();
-  };
-  const handlePause = () => audioRef.current?.pause();
-  const handleStop = () => {
-    const a = audioRef.current;
-    if (!a) return;
-    a.pause();
-    a.currentTime = 0;
-    resetTimeline();
-    charLeft.current?.setPose("idle");
-    charRight.current?.setPose("idle");
-    changeAudio(0); // reset to first audio
-    setSlideReady(false);
-    iframeRef.current!.src = manifest.slideUrl; // reload slide 1
-  };
-
-  const playSignal = useCallback(
-    (ev: Event & { src?: string }) => {
-      switch (ev.type) {
-        case "slideNext": {
-          postToSlide("slide-next");
-          const next = Math.min(pageIdx + 1, manifest.audioUrls.length - 1);
-          if (next !== pageIdx) {
-            changeAudio(next);
-            resetTimeline();
-            // 自動再生を維持
-            audioRef.current?.play();
-          }
-          break;
-        }
-        case "slidePrev": {
-          postToSlide("slide-prev");
-          const prev = Math.max(pageIdx - 1, 0);
-          if (prev !== pageIdx) {
-            changeAudio(prev);
-            resetTimeline();
-            audioRef.current?.play();
-          }
-          break;
-        }
-        case "slideStep":
-          postToSlide("slide-step");
-          break;
-        case "pose": {
-          const actor = ev.target === "left" ? charLeft.current : charRight.current;
-          actor?.setPose((ev.name as any) ?? "idle");
-          break;
-        }
-        case "sprite": {
-          if (ev.src) {
-            const actor = ev.target === "left" ? charLeft.current : charRight.current;
-            actor?.setSprite(ev.src);
-          }
-          break;
-        }
-        default:
-          break;
-      }
-    },
-    [pageIdx, postToSlide, changeAudio, resetTimeline, manifest.audioUrls.length]
+  /* -------------------------------------------------------------
+     Timeline hook (per page)
+  ------------------------------------------------------------- */
+  const { reset: resetTimeline } = useTimeline(
+    slideReady && audioRef.current ? audioRef.current : null,
+    eventsPages[pageIdx] ?? [],
+    (ev)=> playSignal(ev as any),
   );
 
-  useEffect(() => {
-    const a = audioRef.current;
-    if (!a) return;
-    const onEnded = () => playSignal({ type: "slideNext", time_sec: 0 });
-    a.addEventListener("ended", onEnded);
-    return () => a.removeEventListener("ended", onEnded);
-  }, [playSignal]);
+  /* audio source swap on page change */
+  useEffect(()=>{
+    const a = audioRef.current; if(!a) return;
+    a.pause();
+    a.src = manifest.audioUrls[pageIdx] ?? '';
+    a.currentTime = 0;
+    resetTimeline();
+    if (hasInteracted.current){ a.play().catch(()=>{}); }
+  },[pageIdx, resetTimeline]);
 
+  /* auto‑advance when audio ends */
+  useEffect(()=>{
+    const a = audioRef.current; if(!a) return;
+    const onEnd = ()=>{ if(pageIdx < eventsPages.length-1) goTo(pageIdx+1); };
+    a.addEventListener('ended', onEnd);
+    return ()=> a.removeEventListener('ended', onEnd);
+  },[pageIdx, eventsPages.length]);
+
+  /* -------------------------------------------------------------
+     Navigation
+  ------------------------------------------------------------- */
+  const goTo = (idx:number)=>{
+    idx = Math.max(0, Math.min(idx, eventsPages.length-1));
+    if(idx===pageIdx) return;
+    postToSlide(idx>pageIdx ? 'slide-next' : 'slide-prev');
+    setPageIdx(idx);
+    charLeft.current?.setPose('idle');
+    charRight.current?.setPose('idle');
+  };
+
+  /* -------------------------------------------------------------
+     Event → action
+  ------------------------------------------------------------- */
+  const playSignal = useCallback((ev: Event & {src?:string})=>{
+    switch(ev.type){
+      case 'slideNext': goTo(pageIdx+1); break;
+      case 'slidePrev': goTo(pageIdx-1); break;
+      case 'slideStep': postToSlide('slide-step'); break;
+      case 'pose':{
+        const actor = ev.target==='left' ? charLeft.current : charRight.current;
+        actor?.setPose((ev.name as any)||'idle');
+        break;
+      }
+      case 'sprite':{
+        const actor = ev.target==='left' ? charLeft.current : charRight.current;
+        if(ev.src) actor?.setSprite(ev.src);
+        break;
+      }
+      default: break;
+    }
+  },[pageIdx, postToSlide]);
+
+  /* -------------------------------------------------------------
+     Controls
+  ------------------------------------------------------------- */
+  const handlePlay = ()=>{ if(!slideReady) return; hasInteracted.current = true; audioRef.current?.play(); };
+  const handlePause = ()=> audioRef.current?.pause();
+  const handleStop = ()=>{ audioRef.current?.pause(); if(audioRef.current) audioRef.current.currentTime = 0; hasInteracted.current=false; goTo(0); };
+
+  /* -------------------------------------------------------------
+     Render
+  ------------------------------------------------------------- */
   return (
-    <div
-      id="root"
-      style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden" }}
-    >
-      {/* slide */}
+    <div id="root" style={{position:'relative',width:'100%',height:'100vh',overflow:'hidden'}}>
       <iframe
         id="slide"
         ref={iframeRef}
         src={manifest.slideUrl}
-        onLoad={() => setSlideReady(true)}
-        style={{
-          position: "absolute",
-          top: "5%",
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: "80%",
-          height: "90%",
-          border: "1px solid gray",
-          background: "#fff",
-        }}
+        onLoad={()=>setReady(true)}
+        style={{position:'absolute',top:'5%',left:'50%',transform:'translateX(-50%)',width:'80%',height:'90%',border:'1px solid gray',background:'#fff'}}
       />
 
-      {/* character canvases */}
-      <canvas
-        id="charLeft"
-        ref={leftCanvasRef}
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: "-4vw",
-          width: "30vw",
-          height: "30vw",
-          pointerEvents: "none",
-          zIndex: 10,
-        }}
-      />
-      <canvas
-        id="charRight"
-        ref={rightCanvasRef}
-        style={{
-          position: "absolute",
-          bottom: 0,
-          right: "-4vw",
-          width: "30vw",
-          height: "30vw",
-          pointerEvents: "none",
-          zIndex: 10,
-        }}
-      />
+      <canvas id="charLeft" ref={leftCanvasRef} style={{position:'absolute',bottom:0,left:'-4vw',width:'30vw',height:'30vw',pointerEvents:'none',zIndex:10}} />
+      <canvas id="charRight" ref={rightCanvasRef} style={{position:'absolute',bottom:0,right:'-4vw',width:'30vw',height:'30vw',pointerEvents:'none',zIndex:10}} />
 
-      {/* audio element (src is managed dynamically) */}
-      <audio ref={audioRef} src={manifest.audioUrls[0]} preload="auto" />
+      <audio ref={audioRef} preload="auto" />
 
-      {/* controls */}
-      <div style={{ position: "absolute", top: 10, right: 10, zIndex: 20 }}>
-        <button onClick={handlePlay} disabled={!slideReady}>
-          ▶︎
-        </button>{" "}
-        <button onClick={handlePause}>⏸</button>{" "}
-        <button onClick={handleStop}>◼︎</button>
+      <div style={{position:'absolute',top:10,right:10,zIndex:20}}>
+        <button onClick={handlePlay}>▶︎</button>{' '}<button onClick={handlePause}>⏸</button>{' '}<button onClick={handleStop}>◼︎</button>
       </div>
     </div>
   );
