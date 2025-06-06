@@ -6,7 +6,7 @@ from playwright.async_api import async_playwright
 from pydantic import BaseModel
 from tqdm import tqdm
 
-from .models import Event, EventList
+from ..models import Event, EventList
 
 
 class PlayConfig(BaseModel):

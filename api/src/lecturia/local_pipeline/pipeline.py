@@ -8,13 +8,13 @@ from loguru import logger
 from moviepy.editor import AudioFileClip, ImageSequenceClip
 from pydub import AudioSegment
 
-from .chains.event_extractor import create_event_extractor_chain
-from .chains.slide_maker import HtmlSlide, create_slide_maker_chain
-from .chains.slide_to_script import ScriptList, create_slide_to_script_chain
-from .chains.tts import Talk, create_tts_chain
-from .models import Event, EventList, MovieConfig
-from .media import remove_long_silence
-from .slide_editor import edit_slide
+from ..chains.event_extractor import create_event_extractor_chain
+from ..chains.slide_maker import HtmlSlide, create_slide_maker_chain
+from ..chains.slide_to_script import ScriptList, create_slide_to_script_chain
+from ..chains.tts import Talk, create_tts_chain
+from ..models import Event, EventList, MovieConfig
+from ..media import remove_long_silence
+from ..slide_editor import edit_slide
 from .slide_player import PlayConfig, play_slide
 
 

@@ -1,5 +1,20 @@
 version: "3"
 services:
+  gcs:
+    image: fsouza/fake-gcs-server
+    ports:
+      - 4443:4443
+    volumes:
+      - gcs_data:/data/lecturia-private-storage
+    command:
+      ["-scheme", "http", "-port", "4443", "-external-url", "http://gcs:4443"]
+  gcloud-tasks-emulator:
+    image: ghcr.io/aertje/cloud-tasks-emulator:latest
+    command: -host 0.0.0.0 -port 8123 -queue "projects/lecturia-444309/locations/asia-northeast1/queues/lecture-queue"
+    ports:
+      - "${TASKS_PORT:-8123}:8123"
+    environment:
+      APP_ENGINE_EMULATOR_HOST: http://localhost:8080
   lecturia:
     build:
       context: .
@@ -10,3 +25,5 @@ services:
       - .:/app
     env_file:
       - .env
+    depends_on:
+      - gcs

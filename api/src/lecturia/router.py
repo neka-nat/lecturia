@@ -1,12 +1,19 @@
 import base64
+import os
+import uuid
+import datetime
 from pathlib import Path
 
 import fastapi
+from fastapi import Body
+from google.cloud import tasks_v2
 
-from lecturia.models import Manifest
+from lecturia.models import Manifest, MovieConfig
 
 
 router = fastapi.APIRouter()
+client = tasks_v2.CloudTasksClient()
+parent = client.queue_path(os.environ["PROJECT_ID"], "us-central1", "lecture-queue")
 
 
 @router.get("/lectures/{lecture_id}/manifest")
@@ -31,3 +38,17 @@ async def get_lecture_manifest(lecture_id: str) -> Manifest:
         slide_width=1280,
         slide_height=720,
     )
+
+
+@router.post("/create-lecture")
+async def create_lecture(config: MovieConfig = Body(...)):
+    task_id = str(uuid.uuid4())
+    task = tasks_v2.Task(
+        parent=parent,
+        task_id=str(uuid.uuid4()),
+        schedule_time=datetime.datetime.now(datetime.timezone.utc),
+        dispatch_count=0,
+        dispatch_deadline=datetime.timedelta(seconds=600),
+    )
+    client.create_task(task)
+    return {"task_id": task_id}

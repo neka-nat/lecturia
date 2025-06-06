@@ -5,7 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from lecturia.models import Character, MovieConfig
-from lecturia.pipeline import create_movie
+from lecturia.local_pipeline.pipeline import create_movie
 
 
 load_dotenv()
