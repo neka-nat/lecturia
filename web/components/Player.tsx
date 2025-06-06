@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useLayoutEffect,
   useRef,
+  useState,
 } from 'react';
 import { Event, useTimeline } from '@/hooks/useTimeline';
 import { Character } from '@/utils/character';
@@ -13,8 +14,8 @@ export type Manifest = {
   slideUrl: string;
   audioUrl: string;
   events: Event[];
-  sprites: Record<'left' | 'right', string>; // base64 data-urls (may be empty strings)
-  slideWidth: number; // not used yet but kept for future scaling
+  sprites: Record<'left' | 'right', string>; // base64 data‑urls (may be empty strings)
+  slideWidth: number;
   slideHeight: number;
 };
 
@@ -23,17 +24,16 @@ interface Props {
 }
 
 export const Player: React.FC<Props> = ({ manifest }) => {
-  /* refs to DOM elements */
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const leftCanvasRef = useRef<HTMLCanvasElement>(null);
   const rightCanvasRef = useRef<HTMLCanvasElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  /* character instances (lazy-created) */
   const charLeft = useRef<Character | null>(null);
   const charRight = useRef<Character | null>(null);
 
-  /* Initialise Character objects once the canvases exist */
+  const [slideReady, setSlideReady] = useState(false);
+
   useLayoutEffect(() => {
     if (leftCanvasRef.current && !charLeft.current) {
       charLeft.current = new Character(leftCanvasRef.current);
@@ -43,7 +43,6 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     }
   }, []);
 
-  /* Load initial sprites from the manifest */
   useEffect(() => {
     (async () => {
       if (manifest.sprites.right && charRight.current) {
@@ -55,18 +54,12 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     })();
   }, [manifest.sprites]);
 
-  /* Helper to post messages to the slide */
-  const postToSlide = useCallback(
-    (msg: string) => {
-      const win = iframeRef.current?.contentWindow;
-      if (win) win.postMessage(msg, '*');
-    },
-    [],
-  );
+  const postToSlide = useCallback((msg: string) => {
+    iframeRef.current?.contentWindow?.postMessage(msg, '*');
+  }, []);
 
-  /* playSignal replicates the global function from player.html */
   const playSignal = useCallback(
-    (ev: Event) => {
+    (ev: Event & { src?: string }) => {
       switch (ev.type) {
         case 'slideNext':
           postToSlide('slide-next');
@@ -77,11 +70,16 @@ export const Player: React.FC<Props> = ({ manifest }) => {
         case 'slideStep':
           postToSlide('slide-step');
           break;
-        case 'pose': {
-          const actor = ev.target === 'left' ? charLeft.current : charRight.current;
-          actor?.setPose((ev.name as any) ?? 'idle');
+        case 'pose':
+          (ev.target === 'left' ? charLeft.current : charRight.current)?.setPose(
+            (ev.name as any) ?? 'idle',
+          );
           break;
-        }
+        case 'sprite':
+          if (ev.src) {
+            (ev.target === 'left' ? charLeft.current : charRight.current)?.setSprite(ev.src);
+          }
+          break;
         default:
           break;
       }
@@ -89,22 +87,16 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     [postToSlide],
   );
 
-  /* Expose helpers on window for external debug / parity with old player.html */
-  useEffect(() => {
-    (window as any).playSignal = (p: any) => playSignal(p);
-    (window as any).setSprite = async (src: string, target: 'left' | 'right' = 'right') => {
-      const actor = target === 'left' ? charLeft.current : charRight.current;
-      await actor?.setSprite(src);
-    };
-  }, [playSignal]);
-
   const { reset: resetTimeline } = useTimeline(
-    audioRef.current ?? null,
+    slideReady && audioRef.current ? audioRef.current : null,
     manifest.events,
     playSignal,
   );
 
-  const handlePlay = () => audioRef.current?.play();
+  const handlePlay = () => {
+    if (!slideReady) return; // safety
+    audioRef.current?.play();
+  };
   const handlePause = () => audioRef.current?.pause();
   const handleStop = () => {
     const a = audioRef.current;
@@ -112,9 +104,13 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     a.pause();
     a.currentTime = 0;
     resetTimeline();
-    if (iframeRef.current) iframeRef.current.src = manifest.slideUrl;
     charLeft.current?.setPose('idle');
     charRight.current?.setPose('idle');
+    // reload slide to first page & reset ready flag
+    if (iframeRef.current) {
+      setSlideReady(false);
+      iframeRef.current.src = manifest.slideUrl;
+    }
   };
 
   return (
@@ -122,12 +118,11 @@ export const Player: React.FC<Props> = ({ manifest }) => {
       id="root"
       style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden' }}
     >
-      {/* Slide iframe */}
       <iframe
         id="slide"
         ref={iframeRef}
         src={manifest.slideUrl}
-        // faithful to original default centre layout; could be toggled later
+        onLoad={() => setSlideReady(true)}
         style={{
           position: 'absolute',
           top: '5%',
@@ -140,7 +135,6 @@ export const Player: React.FC<Props> = ({ manifest }) => {
         }}
       />
 
-      {/* Character canvases */}
       <canvas
         id="charLeft"
         ref={leftCanvasRef}
@@ -149,11 +143,12 @@ export const Player: React.FC<Props> = ({ manifest }) => {
           bottom: 0,
           left: '-4vw',
           width: '30vw',
-          aspectRatio: '1 / 1',
+          height: '30vw',
           pointerEvents: 'none',
           zIndex: 10,
         }}
       />
+
       <canvas
         id="charRight"
         ref={rightCanvasRef}
@@ -162,19 +157,20 @@ export const Player: React.FC<Props> = ({ manifest }) => {
           bottom: 0,
           right: '-4vw',
           width: '30vw',
-          aspectRatio: '1 / 1',
+          height: '30vw',
           pointerEvents: 'none',
           zIndex: 10,
         }}
       />
 
-      {/* Hidden audio element (controls shown for debug) */}
       <audio ref={audioRef} src={manifest.audioUrl} preload="auto" />
 
       <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 20 }}>
-        <button onClick={handlePlay}>▶︎ Play</button>{' '}
-        <button onClick={handlePause}>⏸ Pause</button>{' '}
-        <button onClick={handleStop}>◼ Stop</button>
+        <button onClick={handlePlay} disabled={!slideReady}>
+          ▶︎
+        </button>{' '}
+        <button onClick={handlePause}>⏸</button>{' '}
+        <button onClick={handleStop}>◼︎</button>
       </div>
     </div>
   );
