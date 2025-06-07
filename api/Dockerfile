@@ -17,6 +17,5 @@ RUN apt-get update && \
 COPY . /app
 
 RUN uv pip install -e . --break-system-packages --system
-RUN playwright install
 
 CMD ["fastapi", "run", "src/lecturia/server.py"]

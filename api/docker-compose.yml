@@ -27,3 +27,5 @@ services:
       - .env
     depends_on:
       - gcs
+volumes:
+  gcs_data:
