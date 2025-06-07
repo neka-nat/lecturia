@@ -9,11 +9,33 @@ from fastapi import Body
 from google.cloud import tasks_v2
 
 from lecturia.models import Manifest, MovieConfig
+from pydantic import BaseModel
+
+
+class LectureInfo(BaseModel):
+    id: str
+    title: str
+    topic: str
+    created_at: str
 
 
 router = fastapi.APIRouter()
 client = tasks_v2.CloudTasksClient()
 parent = client.queue_path(os.environ["PROJECT_ID"], "us-central1", "lecture-queue")
+
+
+@router.get("/lectures")
+async def list_lectures() -> list[LectureInfo]:
+    # For now, return the test lecture
+    # TODO: Replace with actual database/file system lookup
+    return [
+        LectureInfo(
+            id="c527e23f-ca9a-4d84-ac83-72b877be5a6b",
+            title="サンプル講義",
+            topic="テストトピック",
+            created_at="2025-06-07"
+        )
+    ]
 
 
 @router.get("/lectures/{lecture_id}/manifest")
