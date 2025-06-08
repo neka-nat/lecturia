@@ -1,3 +1,4 @@
+import datetime
 import uuid
 from typing import Literal
 
@@ -71,6 +72,7 @@ class Manifest(BaseModel):
     sprites: dict[str, str]  # base64 encoded image
     slide_width: int
     slide_height: int
+    created_at: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
 
     model_config = ConfigDict(
         alias_generator=to_camel,
