@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Play, Calendar, Sparkles, Loader2, Plus, ArrowRight } from 'lucide-react';
+import { BookOpen, Play, Calendar, Sparkles, Loader2, Plus, ArrowRight, Trash2 } from 'lucide-react';
 
 interface Lecture {
   id: string;
@@ -78,6 +78,32 @@ export default function HomePage() {
 
   const handleLectureClick = (lectureId: string) => {
     router.push(`/lectures/${lectureId}`);
+  };
+
+  const handleDeleteLecture = async (lectureId: string, lectureTitle: string) => {
+    if (!confirm(`「${lectureTitle}」を削除しますか？この操作は取り消せません。`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}/api/lectures/${lectureId}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      if (response.ok) {
+        // Remove the deleted lecture from the list
+        setExistingLectures(prev => prev.filter(lecture => lecture.id !== lectureId));
+        alert('講義が削除されました。');
+      } else {
+        alert('講義の削除に失敗しました。');
+      }
+    } catch (error) {
+      console.error('Error deleting lecture:', error);
+      alert('講義削除中にエラーが発生しました。');
+    }
   };
 
   return (
@@ -243,7 +269,19 @@ export default function HomePage() {
                             </div>
                           </div>
                         </div>
-                        <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all duration-300 flex-shrink-0 ml-4" />
+                        <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteLecture(lecture.id, lecture.title);
+                            }}
+                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100"
+                            title="講義を削除"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all duration-300" />
+                        </div>
                       </div>
                     </div>
                   ))}
