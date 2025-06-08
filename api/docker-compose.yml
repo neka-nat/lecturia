@@ -19,6 +19,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: lecturia:latest
     ports:
       - "8000:8000"
     volumes:
@@ -29,3 +30,10 @@ services:
       - .env
     depends_on:
       - gcs
+  worker:
+    image: lecturia:latest
+    command: ["fastapi", "run", "src/lecturia/cloud_pipeline/workflow.py", "--host", "0.0.0.0", "--port", "8001"]
+    volumes:
+      - .:/app
+    environment:
+      - STORAGE_EMULATOR_HOST=http://gcs:4443
