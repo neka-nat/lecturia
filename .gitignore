@@ -3,5 +3,7 @@ __pycache__
 .env
 
 results
+api/lecturia-public-storage/**/*.png
+api/lecturia-public-storage/**/*.mp4
 
 .terraform
