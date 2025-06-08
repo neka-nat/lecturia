@@ -10,7 +10,7 @@ services:
       ["-scheme", "http", "-port", "4443", "-external-url", "http://gcs:4443"]
   gcloud-tasks-emulator:
     image: ghcr.io/aertje/cloud-tasks-emulator:latest
-    command: -host 0.0.0.0 -port 8123 -queue "projects/lecturia-444309/locations/asia-northeast1/queues/lecture-queue"
+    command: -host 0.0.0.0 -port 8123 -queue "projects/lecturia-457203/locations/asia-northeast1/queues/lecture-queue"
     ports:
       - "${TASKS_PORT:-8123}:8123"
     environment:
@@ -26,6 +26,7 @@ services:
       - .:/app
     environment:
       - STORAGE_EMULATOR_HOST=http://gcs:4443
+      - WORKER_URL=http://worker:8001
     env_file:
       - .env
     depends_on:
@@ -33,6 +34,8 @@ services:
   worker:
     image: lecturia:latest
     command: ["fastapi", "run", "src/lecturia/cloud_pipeline/workflow.py", "--host", "0.0.0.0", "--port", "8001"]
+    ports:
+      - "8001:8001"
     volumes:
       - .:/app
     environment:

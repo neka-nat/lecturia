@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 from fastapi import FastAPI, HTTPException, Body
-from langchain_core.callbacks import ConsoleCallbackHandler
+from langchain_core.tracers.stdout import ConsoleCallbackHandler
 from loguru import logger
 from pydub import AudioSegment
 
@@ -13,7 +13,7 @@ from ..chains.slide_maker import HtmlSlide, create_slide_maker_chain
 from ..chains.slide_to_script import ScriptList, create_slide_to_script_chain
 from ..chains.tts import Talk, create_tts_chain
 from ..chains.event_extractor import create_event_extractor_chain
-from ..chains.slide_refiner import edit_slide
+from ..slide_editor import edit_slide
 from ..media import remove_long_silence
 from ..models import MovieConfig, EventList, Event
 from ..storage import is_exists_in_public_bucket, download_data_from_public_bucket, upload_data_to_public_bucket
