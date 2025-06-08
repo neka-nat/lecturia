@@ -1,6 +1,7 @@
 import uuid
 import tempfile
 import time
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -40,10 +41,10 @@ async def create_lecture(lecture_id: str | None = None, config: MovieConfig = Bo
     for i, character in enumerate(config.characters):
         if i == 0:
             sprite_path = Path(__file__).parent.parent.resolve() / "html" / character.sprite_name
-            upload_data_to_public_bucket(sprite_path.read_bytes(), f"lectures/{lecture_id}/sprites/right.png")
+            upload_data_to_public_bucket(sprite_path.read_bytes(), f"lectures/{lecture_id}/sprites/right.png", "image/png")
         else:
             sprite_path = Path(__file__).parent.parent.resolve() / "html" / character.sprite_name
-            upload_data_to_public_bucket(sprite_path.read_bytes(), f"lectures/{lecture_id}/sprites/left.png")
+            upload_data_to_public_bucket(sprite_path.read_bytes(), f"lectures/{lecture_id}/sprites/left.png", "image/png")
 
     if is_exists_in_public_bucket(f"lectures/{lecture_id}/result_slide.html"):
         logger.info(f"Loading result_slide.html from {f'lectures/{lecture_id}/result_slide.html'}")
@@ -63,7 +64,7 @@ async def create_lecture(lecture_id: str | None = None, config: MovieConfig = Bo
         # Avoid rate limit
         time.sleep(60)
         result_slide = edit_slide(result_slide)
-        upload_data_to_public_bucket(result_slide.export_embed_images(), f"lectures/{lecture_id}/result_slide.html")
+        upload_data_to_public_bucket(result_slide.export_embed_images(), f"lectures/{lecture_id}/result_slide.html", "text/html")
 
     if is_exists_in_public_bucket(f"lectures/{lecture_id}/result_script.json"):
         logger.info(f"Loading result_script.json from {f'lectures/{lecture_id}/result_script.json'}")
@@ -76,13 +77,13 @@ async def create_lecture(lecture_id: str | None = None, config: MovieConfig = Bo
                 "callbacks": [ConsoleCallbackHandler()],
             },
         )
-        upload_data_to_public_bucket(result_script.model_dump_json(), f"lectures/{lecture_id}/result_script.json")
+        upload_data_to_public_bucket(result_script.model_dump_json(), f"lectures/{lecture_id}/result_script.json", "application/json")
 
     temp_dir = tempfile.mkdtemp()
     audio_files: list[Path] = []
     for script in result_script.scripts:
         audio_file = Path(temp_dir) / f"audio_{script.slide_no}.mp3"
-        if not audio_file.exists():
+        if not is_exists_in_public_bucket(f"lectures/{lecture_id}/audio_{script.slide_no}.mp3"):
             if len(config.characters) == 1:
                 text = script.script[0].content
                 audio = tts.invoke(text, voice_type=config.characters[0].voice_type)
@@ -105,10 +106,12 @@ async def create_lecture(lecture_id: str | None = None, config: MovieConfig = Bo
     # Calculate audio segments with page transition duration
     audio_segments: list[AudioSegment] = []
     for audio_file in audio_files:
+        upload_data_to_public_bucket(audio_file.read_bytes(), f"lectures/{lecture_id}/audio_{audio_file.name}", "audio/mpeg")
         audio_segments.append(
             AudioSegment.from_mp3(audio_file) + AudioSegment.silent(duration=config.page_transition_duration_sec * 1000)
         )
     slide_page_event_sec = np.cumsum([len(audio_segment) / 1000 for audio_segment in audio_segments])
+    shutil.rmtree(temp_dir)
 
     if is_exists_in_public_bucket(f"lectures/{lecture_id}/events.json"):
         logger.info(f"Loading events.json from {f'lectures/{lecture_id}/events.json'}")
@@ -132,6 +135,6 @@ async def create_lecture(lecture_id: str | None = None, config: MovieConfig = Bo
             )
             events.events.append(Event(type="slideNext", time_sec=slide_page_event_sec[slide_no]))
         logger.info(f"Events: {events}")
-        upload_data_to_public_bucket(events.model_dump_json(), f"lectures/{lecture_id}/events.json")
+        upload_data_to_public_bucket(events.model_dump_json(), f"lectures/{lecture_id}/events.json", "application/json")
 
     return {"lecture_id": lecture_id}

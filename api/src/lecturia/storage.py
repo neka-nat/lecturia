@@ -6,20 +6,33 @@ _GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME = "lecturia-public-storage"
 _GOOGLE_CLOUD_STORAGE_PRIVATE_BUCKET_NAME = "lecturia-private-storage"
 
 
-def upload_data(data: bytes | str, path: str, bucket_name: str) -> str:
+def upload_data(
+    data: bytes | str,
+    path: str,
+    bucket_name: str,
+    mime_type: str = "application/octet-stream",
+) -> str:
     client = storage.Client()
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(path)
-    blob.upload_from_string(data)
+    blob.upload_from_string(data, content_type=mime_type)
     return f"https://storage.googleapis.com/{bucket_name}/{path}"
 
 
-def upload_data_to_public_bucket(data: bytes | str, path: str) -> str:
-    return upload_data(data, path, _GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME)
+def upload_data_to_public_bucket(
+    data: bytes | str,
+    path: str,
+    mime_type: str = "application/octet-stream",
+) -> str:
+    return upload_data(data, path, _GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME, mime_type)
 
 
-def upload_data_to_private_bucket(data: bytes | str, path: str) -> str:
-    return upload_data(data, path, _GOOGLE_CLOUD_STORAGE_PRIVATE_BUCKET_NAME)
+def upload_data_to_private_bucket(
+    data: bytes | str,
+    path: str,
+    mime_type: str = "application/octet-stream",
+) -> str:
+    return upload_data(data, path, _GOOGLE_CLOUD_STORAGE_PRIVATE_BUCKET_NAME, mime_type)
 
 
 def is_exists_in_public_bucket(path: str) -> bool:
