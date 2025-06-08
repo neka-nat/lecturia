@@ -27,7 +27,7 @@ router = fastapi.APIRouter()
 
 @router.get("/lectures")
 async def list_lectures() -> list[LectureInfo]:
-    lectures = ls_public_bucket()
+    lectures = ls_public_bucket("lectures")
     logger.info(f"Lectures: {lectures}")
     return [
         LectureInfo(
@@ -53,9 +53,9 @@ async def get_lecture_manifest(lecture_id: str) -> Manifest:
     return Manifest(
         id=lecture_id,
         title="test",
-        slide_url=f"/static/{lecture_id}/result_slide.html",
-        audio_urls=[f"/static/{lecture_id}/audio_{i + 1}.mp3" for i in range(8)],
-        events_url=f"/static/{lecture_id}/events.json",
+        slide_url=f"/static/lectures/{lecture_id}/result_slide.html",
+        audio_urls=[f"/static/lectures/{lecture_id}/audio_{i + 1}.mp3" for i in range(8)],
+        events_url=f"/static/lectures/{lecture_id}/events.json",
         sprites=sprites,
         slide_width=1280,
         slide_height=720,

@@ -29,14 +29,14 @@ def is_exists_in_public_bucket(path: str) -> bool:
     return blob.exists()
 
 
-def ls_public_bucket() -> list[str]:
+def ls_public_bucket(prefix: str = "") -> list[str]:
     client = storage.Client()
-    blobs = client.list_blobs(_GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME)
+    blobs = client.list_blobs(_GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME, prefix=prefix)
     directories = set()
     for blob in blobs:
         dirs = blob.name.split("/")
-        if len(dirs) > 2:
-            directories.add(dirs[0])
+        if dirs[0] == prefix and len(dirs[1:]) > 1:
+            directories.add(dirs[1])
     return list(directories)
 
 
