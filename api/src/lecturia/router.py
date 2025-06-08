@@ -7,10 +7,11 @@ from pathlib import Path
 import fastapi
 from fastapi import Body
 from google.cloud import tasks_v2
+from loguru import logger
 from pydantic import BaseModel
 
 from .models import Manifest, MovieConfig
-from .storage import download_data_from_public_bucket
+from .storage import download_data_from_public_bucket, ls_public_bucket
 
 
 class LectureInfo(BaseModel):
@@ -27,23 +28,23 @@ parent = client.queue_path(os.environ["PROJECT_ID"], "us-central1", "lecture-que
 
 @router.get("/lectures")
 async def list_lectures() -> list[LectureInfo]:
-    # For now, return the test lecture
-    # TODO: Replace with actual database/file system lookup
+    lectures = ls_public_bucket()
+    logger.info(f"Lectures: {lectures}")
     return [
         LectureInfo(
-            id="c527e23f-ca9a-4d84-ac83-72b877be5a6b",
+            id=lecture,
             title="サンプル講義",
             topic="テストトピック",
             created_at="2025-06-07"
         )
+        for lecture in lectures
     ]
 
 
 @router.get("/lectures/{lecture_id}/manifest")
 async def get_lecture_manifest(lecture_id: str) -> Manifest:
-    test_id = "c527e23f-ca9a-4d84-ac83-72b877be5a6b"
-    sprite_right_bytes = download_data_from_public_bucket(f"/{test_id}/sprites/right.png")
-    sprite_left_bytes = download_data_from_public_bucket(f"/{test_id}/sprites/left.png")
+    sprite_right_bytes = download_data_from_public_bucket(f"/{lecture_id}/sprites/right.png")
+    sprite_left_bytes = download_data_from_public_bucket(f"/{lecture_id}/sprites/left.png")
     sprites: dict[str, str] = {}
     if sprite_left_bytes:
         sprites["left"] = f"data:image/png;base64,{base64.b64encode(sprite_left_bytes).decode('utf-8')}"
@@ -51,11 +52,11 @@ async def get_lecture_manifest(lecture_id: str) -> Manifest:
         sprites["right"] = f"data:image/png;base64,{base64.b64encode(sprite_right_bytes).decode('utf-8')}"
 
     return Manifest(
-        id=test_id,
+        id=lecture_id,
         title="test",
-        slide_url=f"/static/{test_id}/result_slide.html",
-        audio_urls=[f"/static/{test_id}/audio_{i + 1}.mp3" for i in range(8)],
-        events_url=f"/static/{test_id}/events.json",
+        slide_url=f"/static/{lecture_id}/result_slide.html",
+        audio_urls=[f"/static/{lecture_id}/audio_{i + 1}.mp3" for i in range(8)],
+        events_url=f"/static/{lecture_id}/events.json",
         sprites=sprites,
         slide_width=1280,
         slide_height=720,
