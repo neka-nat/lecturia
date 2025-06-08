@@ -12,7 +12,7 @@ from loguru import logger
 from pydantic import BaseModel
 
 from .models import Manifest, MovieConfig
-from .storage import download_data_from_public_bucket, ls_public_bucket
+from .storage import delete_data_from_public_bucket, download_data_from_public_bucket, ls_public_bucket
 
 
 class LectureInfo(BaseModel):
@@ -84,3 +84,9 @@ async def create_lecture(config: MovieConfig = Body(...)):
     task.dispatch_deadline = duration_pb2.Duration(seconds=600)
     client.create_task(parent=parent, task=task)
     return {"task_id": task_id}
+
+
+@router.delete("/lectures/{lecture_id}")
+async def delete_lecture(lecture_id: str):
+    delete_data_from_public_bucket(f"lectures/{lecture_id}")
+    return {"message": "Lecture deleted"}

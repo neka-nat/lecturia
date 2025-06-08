@@ -62,3 +62,10 @@ def download_data_from_public_bucket(path: str) -> bytes | None:
     except Exception as e:
         logger.error(f"Error downloading data from public bucket: {e}")
         return None
+
+
+def delete_data_from_public_bucket(path: str):
+    client = storage.Client()
+    bucket = client.bucket(_GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME)
+    blob = bucket.blob(path)
+    blob.delete()
