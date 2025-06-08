@@ -42,8 +42,8 @@ async def list_lectures() -> list[LectureInfo]:
 
 @router.get("/lectures/{lecture_id}/manifest")
 async def get_lecture_manifest(lecture_id: str) -> Manifest:
-    sprite_right_bytes = download_data_from_public_bucket(f"/{lecture_id}/sprites/right.png")
-    sprite_left_bytes = download_data_from_public_bucket(f"/{lecture_id}/sprites/left.png")
+    sprite_right_bytes = download_data_from_public_bucket(f"lectures/{lecture_id}/sprites/right.png")
+    sprite_left_bytes = download_data_from_public_bucket(f"lectures/{lecture_id}/sprites/left.png")
     sprites: dict[str, str] = {}
     if sprite_left_bytes:
         sprites["left"] = f"data:image/png;base64,{base64.b64encode(sprite_left_bytes).decode('utf-8')}"
