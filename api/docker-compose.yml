@@ -5,7 +5,7 @@ services:
     ports:
       - 4443:4443
     volumes:
-      - gcs_data:/data/lecturia-private-storage
+      - ./lecturia-public-storage:/data/lecturia-public-storage
     command:
       ["-scheme", "http", "-port", "4443", "-external-url", "http://gcs:4443"]
   gcloud-tasks-emulator:
@@ -23,9 +23,9 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+    environment:
+      - STORAGE_EMULATOR_HOST=http://gcs:4443
     env_file:
       - .env
     depends_on:
       - gcs
-volumes:
-  gcs_data:

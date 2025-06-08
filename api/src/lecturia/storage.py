@@ -1,4 +1,5 @@
 from google.cloud import storage
+from loguru import logger
 
 
 _GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME = "lecturia-public-storage"
@@ -28,8 +29,12 @@ def is_exists_in_public_bucket(path: str) -> bool:
     return blob.exists()
 
 
-def download_data_from_public_bucket(path: str) -> bytes:
-    client = storage.Client()
-    bucket = client.bucket(_GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME)
-    blob = bucket.blob(path)
-    return blob.download_as_bytes()
+def download_data_from_public_bucket(path: str) -> bytes | None:
+    try:
+        client = storage.Client()
+        bucket = client.bucket(_GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME)
+        blob = bucket.blob(path)
+        return blob.download_as_bytes()
+    except Exception as e:
+        logger.error(f"Error downloading data from public bucket: {e}")
+        return None

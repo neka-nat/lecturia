@@ -7,9 +7,10 @@ from pathlib import Path
 import fastapi
 from fastapi import Body
 from google.cloud import tasks_v2
-
-from lecturia.models import Manifest, MovieConfig
 from pydantic import BaseModel
+
+from .models import Manifest, MovieConfig
+from .storage import download_data_from_public_bucket
 
 
 class LectureInfo(BaseModel):
@@ -41,21 +42,20 @@ async def list_lectures() -> list[LectureInfo]:
 @router.get("/lectures/{lecture_id}/manifest")
 async def get_lecture_manifest(lecture_id: str) -> Manifest:
     test_id = "c527e23f-ca9a-4d84-ac83-72b877be5a6b"
-    sprites_dir = Path(__file__).resolve().parents[2] / "results" / test_id / "sprites"
+    sprite_right_bytes = download_data_from_public_bucket(f"/{test_id}/sprites/right.png")
+    sprite_left_bytes = download_data_from_public_bucket(f"/{test_id}/sprites/left.png")
     sprites: dict[str, str] = {}
-    if (sprites_dir / "left.png").exists():
-        with open(sprites_dir / "left.png", "rb") as f:
-            sprites["left"] = f"data:image/png;base64,{base64.b64encode(f.read()).decode('utf-8')}"
-    if (sprites_dir / "right.png").exists():
-        with open(sprites_dir / "right.png", "rb") as f:
-            sprites["right"] = f"data:image/png;base64,{base64.b64encode(f.read()).decode('utf-8')}"
+    if sprite_left_bytes:
+        sprites["left"] = f"data:image/png;base64,{base64.b64encode(sprite_left_bytes).decode('utf-8')}"
+    if sprite_right_bytes:
+        sprites["right"] = f"data:image/png;base64,{base64.b64encode(sprite_right_bytes).decode('utf-8')}"
 
     return Manifest(
         id=test_id,
         title="test",
-        slide_url=f"/results/{test_id}/result_slide.html",
-        audio_urls=[f"/results/{test_id}/audio_{i + 1}.mp3" for i in range(8)],
-        events_url=f"/results/{test_id}/events.json",
+        slide_url=f"/static/{test_id}/result_slide.html",
+        audio_urls=[f"/static/{test_id}/audio_{i + 1}.mp3" for i in range(8)],
+        events_url=f"/static/{test_id}/events.json",
         sprites=sprites,
         slide_width=1280,
         slide_height=720,
