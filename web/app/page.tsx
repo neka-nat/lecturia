@@ -133,7 +133,7 @@ export default function HomePage() {
                         id="topic"
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/70 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 placeholder-slate-400"
+                        className="w-full px-4 py-3 bg-white/70 border-2 border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300"
                         placeholder="例: 機械学習の基礎"
                         required
                       />
@@ -150,7 +150,7 @@ export default function HomePage() {
                       value={detail}
                       onChange={(e) => setDetail(e.target.value)}
                       rows={4}
-                      className="w-full px-4 py-3 bg-white/70 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 placeholder-slate-400 resize-none"
+                      className="w-full px-4 py-3 bg-white/70 border-2 border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 resize-none"
                       placeholder="講義の詳細内容を入力してください..."
                     />
                   </div>
