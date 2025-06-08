@@ -36,6 +36,15 @@ async def create_lecture(lecture_id: str | None = None, config: MovieConfig = Bo
         speaker.name: "right" if i == 0 else "left" for i, speaker in enumerate(config.speakers)
     }
 
+    # upload sprites
+    for i, character in enumerate(config.characters):
+        if i == 0:
+            sprite_path = Path(__file__).parent.parent.resolve() / "html" / character.sprite_name
+            upload_data_to_public_bucket(sprite_path.read_bytes(), f"lectures/{lecture_id}/sprites/right.png")
+        else:
+            sprite_path = Path(__file__).parent.parent.resolve() / "html" / character.sprite_name
+            upload_data_to_public_bucket(sprite_path.read_bytes(), f"lectures/{lecture_id}/sprites/left.png")
+
     if is_exists_in_public_bucket(f"lectures/{lecture_id}/result_slide.html"):
         logger.info(f"Loading result_slide.html from {f'lectures/{lecture_id}/result_slide.html'}")
         data = download_data_from_public_bucket(f"lectures/{lecture_id}/result_slide.html")

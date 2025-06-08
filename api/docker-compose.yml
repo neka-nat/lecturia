@@ -31,6 +31,7 @@ services:
       - .env
     depends_on:
       - gcs
+      - gcloud-tasks-emulator
   worker:
     image: lecturia:latest
     command: ["fastapi", "run", "src/lecturia/cloud_pipeline/workflow.py", "--host", "0.0.0.0", "--port", "8001"]
@@ -40,3 +41,5 @@ services:
       - .:/app
     environment:
       - STORAGE_EMULATOR_HOST=http://gcs:4443
+    env_file:
+      - .env
