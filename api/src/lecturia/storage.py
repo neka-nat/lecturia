@@ -67,5 +67,18 @@ def download_data_from_public_bucket(path: str) -> bytes | None:
 def delete_data_from_public_bucket(path: str):
     client = storage.Client()
     bucket = client.bucket(_GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME)
-    blob = bucket.blob(path)
-    blob.delete()
+
+    if not path.endswith("/"):
+        path += "/"
+
+    blobs_iter = client.list_blobs(bucket, prefix=path)
+
+    batch = []
+    for blob in blobs_iter:
+        batch.append(blob)
+        if len(batch) == 100:
+            bucket.delete_blobs(batch)
+            batch.clear()
+
+    if batch:
+        bucket.delete_blobs(batch)
