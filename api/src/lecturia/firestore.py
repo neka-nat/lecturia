@@ -35,10 +35,11 @@ def get_status(id: str) -> TaskStatus:
 
 
 def upsert_status(id: str, status: StatusType, error: str | None = None) -> TaskStatus:
-    status = TaskStatus.get_by_id(id)
-    if status is None:
-        status = TaskStatus(id=id)
-    status.status = status
-    status.error = error
-    status.save()
-    return status
+    task_status = TaskStatus.get_by_id(id)
+    if task_status is None:
+        task_status = TaskStatus(id=id)
+    task_status.status = status
+    task_status.error = error
+    task_status.updated_at = datetime.now()
+    task_status.save()
+    return task_status

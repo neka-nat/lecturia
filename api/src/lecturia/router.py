@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from .models import Manifest, MovieConfig
 from .storage import delete_data_from_public_bucket, download_data_from_public_bucket, ls_public_bucket
+from .firestore import TaskStatus, get_status, upsert_status
 
 
 class LectureInfo(BaseModel):
@@ -62,10 +63,21 @@ async def get_lecture_manifest(lecture_id: str) -> Manifest:
     )
 
 
+@router.get("/tasks/{task_id}/status")
+async def get_task_status(task_id: str) -> TaskStatus:
+    task_status = get_status(task_id)
+    if task_status is None:
+        raise fastapi.HTTPException(status_code=404, detail="Task not found")
+    return task_status
+
+
 @router.post("/create-lecture")
 async def create_lecture(config: MovieConfig = Body(...)):
     logger.info(f"Creating lecture: {config}")
     task_id = str(uuid.uuid4())
+    
+    # Initialize task status in Firestore
+    upsert_status(task_id, "pending")
 
     channel = grpc.insecure_channel("gcloud-tasks-emulator:8123")
     transport = CloudTasksGrpcTransport(channel=channel)

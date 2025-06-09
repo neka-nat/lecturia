@@ -1,5 +1,6 @@
-import { Plus, Sparkles, Loader2 } from 'lucide-react';
+import { Plus, Sparkles, Loader2, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { useLectureForm } from '../hooks/useLectureForm';
+import { useTaskStatus } from '../hooks/useTaskStatus';
 
 export function LectureForm() {
   const {
@@ -9,7 +10,11 @@ export function LectureForm() {
     setDetail,
     isSubmitting,
     createLecture,
+    currentTaskId,
+    clearTaskId,
   } = useLectureForm();
+
+  const { taskStatus, isLoading: isStatusLoading, error: statusError, getStatusDisplay } = useTaskStatus(currentTaskId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,6 +84,66 @@ export function LectureForm() {
               </div>
             </button>
           </form>
+
+          {/* Task Status Display */}
+          {currentTaskId && (
+            <div className="mt-6 p-4 bg-slate-50/80 rounded-xl border border-slate-200">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold text-slate-700">タスク状況</h3>
+                <button
+                  onClick={clearTaskId}
+                  className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  閉じる
+                </button>
+              </div>
+              
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs text-slate-500">タスクID:</span>
+                <code className="text-xs bg-slate-200 px-2 py-1 rounded font-mono">{currentTaskId}</code>
+              </div>
+
+              {statusError ? (
+                <div className="flex items-center gap-2 text-red-600">
+                  <XCircle className="w-4 h-4" />
+                  <span className="text-sm">{statusError}</span>
+                </div>
+              ) : isStatusLoading ? (
+                <div className="flex items-center gap-2 text-slate-500">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">ステータス確認中...</span>
+                </div>
+              ) : taskStatus ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    {taskStatus.status === 'completed' && <CheckCircle className="w-4 h-4 text-green-500" />}
+                    {taskStatus.status === 'failed' && <XCircle className="w-4 h-4 text-red-500" />}
+                    {(taskStatus.status === 'pending' || taskStatus.status === 'running') && <Clock className="w-4 h-4 text-blue-500" />}
+                    {taskStatus.status === 'not_started' && <Clock className="w-4 h-4 text-gray-500" />}
+                    <span className={`text-sm font-medium ${getStatusDisplay(taskStatus.status).color}`}>
+                      {getStatusDisplay(taskStatus.status).text}
+                    </span>
+                  </div>
+                  
+                  {taskStatus.error && (
+                    <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
+                      エラー: {taskStatus.error}
+                    </div>
+                  )}
+                  
+                  <div className="text-xs text-slate-400">
+                    最終更新: {new Date(taskStatus.updated_at).toLocaleString('ja-JP')}
+                  </div>
+
+                  {taskStatus.status === 'completed' && (
+                    <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
+                      講義の作成が完了しました。講義一覧をご確認ください。
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ export function useLectureForm() {
   const [topic, setTopic] = useState('');
   const [detail, setDetail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
 
   const createLecture = async (): Promise<boolean> => {
     if (!topic.trim()) return false;
@@ -26,7 +27,7 @@ export function useLectureForm() {
 
       if (response.ok) {
         const result = await response.json();
-        alert(`講義作成タスクが開始されました。タスクID: ${result.task_id}`);
+        setCurrentTaskId(result.task_id);
         resetForm();
         return true;
       } else {
@@ -47,6 +48,10 @@ export function useLectureForm() {
     setDetail('');
   };
 
+  const clearTaskId = () => {
+    setCurrentTaskId(null);
+  };
+
   return {
     topic,
     setTopic,
@@ -55,5 +60,7 @@ export function useLectureForm() {
     isSubmitting,
     createLecture,
     resetForm,
+    currentTaskId,
+    clearTaskId,
   };
 }
