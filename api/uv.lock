@@ -266,6 +266,20 @@ wheels = [
 ]
 
 [[package]]
+name = "firedantic"
+version = "0.11.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "google-cloud-firestore" },
+    { name = "grpcio" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/20/be/1f596b8db6f080ec1b71007c5c4902fe6a4e266fbaf3410e7840897359d2/firedantic-0.11.0.tar.gz", hash = "sha256:5d3a654a159f2c03a28d08ff12ae160a297e5b572d703a64fa7c9df47f598b5d", size = 32165 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f1/de/5aab65c7f6e1d1c34a46042cb9c740d0a5b44f8c26d04291fc0cc76a3cd1/firedantic-0.11.0-py3-none-any.whl", hash = "sha256:75530c86415c6fa4fe899e840918fb96b6a7c640a0a5cea10166055cb24dc654", size = 40124 },
+]
+
+[[package]]
 name = "google-ai-generativelanguage"
 version = "0.6.18"
 source = { registry = "https://pypi.org/simple" }
@@ -327,6 +341,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d6/b8/2b53838d2acd6ec6168fd284a990c76695e84c65deee79c9f3a4276f6b4f/google_cloud_core-2.4.3.tar.gz", hash = "sha256:1fab62d7102844b278fe6dead3af32408b1df3eb06f5c7e8634cbd40edc4da53", size = 35861 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/40/86/bda7241a8da2d28a754aad2ba0f6776e35b67e37c36ae0c45d49370f1014/google_cloud_core-2.4.3-py2.py3-none-any.whl", hash = "sha256:5130f9f4c14b4fafdff75c79448f9495cfade0d8775facf1b09c3bf67e027f6e", size = 29348 },
+]
+
+[[package]]
+name = "google-cloud-firestore"
+version = "2.21.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "google-api-core", extra = ["grpc"] },
+    { name = "google-auth" },
+    { name = "google-cloud-core" },
+    { name = "proto-plus" },
+    { name = "protobuf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/80/9d/027b9bf61a44422bcdcb00a2acc59152065b1cffa1fc89da62277730973e/google_cloud_firestore-2.21.0.tar.gz", hash = "sha256:0c37faa8506297f827eefc38feb155247a6dcb9a541289631015d125f1b003f8", size = 528159 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0a/03/94755c64a2fb85cba734ac05a4f80096b8c0acfab0508c9d52c57f571687/google_cloud_firestore-2.21.0-py3-none-any.whl", hash = "sha256:bf33ccc38a27afc60748d1f9bb7c46b078d0d39d288636bdfd967611d7b3f17f", size = 368813 },
 ]
 
 [[package]]
@@ -821,6 +851,7 @@ dependencies = [
     { name = "anthropic" },
     { name = "beautifulsoup4" },
     { name = "fastapi", extra = ["all"] },
+    { name = "firedantic" },
     { name = "google-cloud-storage" },
     { name = "google-cloud-tasks" },
     { name = "google-genai" },
@@ -846,6 +877,7 @@ requires-dist = [
     { name = "anthropic", specifier = ">=0.52.0" },
     { name = "beautifulsoup4", specifier = ">=4.13.4" },
     { name = "fastapi", extras = ["all"], specifier = ">=0.115.12" },
+    { name = "firedantic", specifier = ">=0.11.0" },
     { name = "google-cloud-storage", specifier = ">=3.1.0" },
     { name = "google-cloud-tasks", specifier = ">=2.19.2" },
     { name = "google-genai", specifier = ">=1.7.0" },
