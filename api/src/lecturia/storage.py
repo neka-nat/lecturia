@@ -1,9 +1,11 @@
+import os
+
 from google.cloud import storage
 from loguru import logger
 
 
-_GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME = "lecturia-public-storage"
-_GOOGLE_CLOUD_STORAGE_PRIVATE_BUCKET_NAME = "lecturia-private-storage"
+_GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME = os.environ["GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME"]
+_GOOGLE_CLOUD_STORAGE_PRIVATE_BUCKET_NAME = os.environ["GOOGLE_CLOUD_STORAGE_PRIVATE_BUCKET_NAME"]
 
 
 def upload_data(

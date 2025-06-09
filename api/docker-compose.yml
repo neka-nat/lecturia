@@ -5,12 +5,12 @@ services:
     ports:
       - 4443:4443
     volumes:
-      - ./lecturia-public-storage:/data/lecturia-public-storage
+      - ./lecturia-public-storage:/data/${GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME}
     command:
       ["-scheme", "http", "-port", "4443", "-external-url", "http://gcs:4443"]
   gcloud-tasks-emulator:
     image: ghcr.io/aertje/cloud-tasks-emulator:latest
-    command: -host 0.0.0.0 -port 8123 -queue "projects/lecturia-457203/locations/asia-northeast1/queues/lecture-queue"
+    command: -host 0.0.0.0 -port 8123 -queue "projects/${PROJECT_ID}/locations/asia-northeast1/queues/lecture-queue"
     ports:
       - "${TASKS_PORT:-8123}:8123"
     environment:
