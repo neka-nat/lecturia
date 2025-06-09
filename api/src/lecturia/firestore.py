@@ -3,7 +3,8 @@ from datetime import datetime
 from typing import Literal
 
 import google.auth.credentials
-from firedantic import configure, Model, Field
+from firedantic import configure, Model
+from pydantic import Field
 from google.cloud import firestore
 from unittest.mock import Mock
 
