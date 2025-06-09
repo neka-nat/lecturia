@@ -1,8 +1,7 @@
 # Lecturia API
 
-## Installation
+## Quick Start
 
 ```bash
-uv sync
-uv run playwright install
+docker compose up -d
 ```
