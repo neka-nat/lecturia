@@ -1,0 +1,6 @@
+{
+  "emulators": {
+    "ui": { "enabled": true, "host": "0.0.0.0", "port": 4000 },
+    "firestore": { "host": "0.0.0.0", "port": 8002 }
+  }
+}

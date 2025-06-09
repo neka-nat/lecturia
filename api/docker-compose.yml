@@ -15,6 +15,24 @@ services:
       - "${TASKS_PORT:-8123}:8123"
     environment:
       APP_ENGINE_EMULATOR_HOST: http://localhost:8080
+  firestore:
+    build:
+      context: .
+      dockerfile: Dockerfile.firebase
+      args:
+        FIREBASE_VERSION: 13.3.0
+    container_name: firestore-emulator
+    command: ["firebase", "emulators:start", "--project=${PROJECT_ID}", "--only", "firestore"]
+    environment:
+      - FIRESTORE_EMULATOR_HOST=0.0.0.0:8002
+      - FIREBASE_PROJECT=${PROJECT_ID}
+      - GCLOUD_PROJECT=${PROJECT_ID}
+    ports:
+      - "4000:4000"   # Emulator UI
+      - "8002:8002"   # Firestore
+    volumes:
+      - ./firebase:/srv/firebase:rw
+      - ./firebase/data:/srv/firebase/data:rw
   lecturia:
     build:
       context: .
@@ -32,6 +50,7 @@ services:
     depends_on:
       - gcs
       - gcloud-tasks-emulator
+      - firestore
   worker:
     image: lecturia:latest
     command: ["fastapi", "run", "src/lecturia/cloud_pipeline/workflow.py", "--host", "0.0.0.0", "--port", "8001"]
