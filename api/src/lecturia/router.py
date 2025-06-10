@@ -103,7 +103,7 @@ async def create_lecture(config: MovieConfig = Body(...)):
     task = tasks_v2.Task(
         http_request=tasks_v2.HttpRequest(
             http_method=tasks_v2.HttpMethod.POST,
-            url=f"{os.environ['WORKER_URL']}/tasks/create-lecture",
+            url=f"{os.environ['WORKER_URL']}/tasks/create-lecture?lecture_id={task_id}",
             headers={"Content-Type": "application/json"},
             body=config.model_dump_json().encode(),
         )
