@@ -12,7 +12,7 @@ from loguru import logger
 from pydantic import BaseModel
 
 from .models import Manifest, MovieConfig
-from .storage import delete_data_from_public_bucket, download_data_from_public_bucket, ls_public_bucket
+from .storage import delete_data_from_public_bucket, download_data_from_public_bucket, ls_public_bucket, is_exists_in_public_bucket
 from .firestore import TaskStatus, get_status, upsert_status
 
 
@@ -32,6 +32,12 @@ async def list_lectures() -> list[LectureInfo]:
     logger.info(f"Lectures: {lectures}")
     lecture_infos: list[LectureInfo] = []
     for lecture_id in lectures:
+        # Only include lectures that have completed processing
+        # Check for events.json which is created at the end of the workflow
+        if not is_exists_in_public_bucket(f"lectures/{lecture_id}/events.json"):
+            logger.info(f"Skipping incomplete lecture: {lecture_id}")
+            continue
+            
         json_str = download_data_from_public_bucket(f"lectures/{lecture_id}/movie_config.json")
         if json_str is None:
             lecture_infos.append(LectureInfo(
