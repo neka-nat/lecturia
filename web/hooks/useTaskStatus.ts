@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 
 export type TaskStatus = 'not_started' | 'pending' | 'running' | 'completed' | 'failed';
 
+const TASK_ID_STORAGE_KEY = 'lecturia-current-task-id';
+
 export interface TaskStatusData {
   status: TaskStatus;
   error?: string;
@@ -28,6 +30,16 @@ export function useTaskStatus(taskId: string | null) {
       if (response.ok) {
         const statusData = await response.json();
         setTaskStatus(statusData);
+        
+        // Auto-clear from localStorage after completion/failure with a delay
+        if (statusData.status === 'completed' || statusData.status === 'failed') {
+          setTimeout(() => {
+            const currentStoredTaskId = localStorage.getItem(TASK_ID_STORAGE_KEY);
+            if (currentStoredTaskId === taskId) {
+              localStorage.removeItem(TASK_ID_STORAGE_KEY);
+            }
+          }, 30000); // Clear after 30 seconds to let user see the final status
+        }
       } else if (response.status === 404) {
         setError('タスクが見つかりません');
       } else {

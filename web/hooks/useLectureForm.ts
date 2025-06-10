@@ -1,10 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+const TASK_ID_STORAGE_KEY = 'lecturia-current-task-id';
 
 export function useLectureForm() {
   const [topic, setTopic] = useState('');
   const [detail, setDetail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
+
+  // Restore task ID from localStorage on component mount
+  useEffect(() => {
+    const savedTaskId = localStorage.getItem(TASK_ID_STORAGE_KEY);
+    if (savedTaskId) {
+      setCurrentTaskId(savedTaskId);
+    }
+  }, []);
 
   const createLecture = async (): Promise<boolean> => {
     if (!topic.trim()) return false;
@@ -27,7 +37,10 @@ export function useLectureForm() {
 
       if (response.ok) {
         const result = await response.json();
-        setCurrentTaskId(result.task_id);
+        const taskId = result.task_id;
+        setCurrentTaskId(taskId);
+        // Persist task ID to localStorage
+        localStorage.setItem(TASK_ID_STORAGE_KEY, taskId);
         resetForm();
         return true;
       } else {
@@ -50,6 +63,8 @@ export function useLectureForm() {
 
   const clearTaskId = () => {
     setCurrentTaskId(null);
+    // Remove task ID from localStorage
+    localStorage.removeItem(TASK_ID_STORAGE_KEY);
   };
 
   return {
