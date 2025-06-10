@@ -32,8 +32,12 @@ class TaskStatus(Model):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
-def get_status(id: str) -> TaskStatus:
-    return TaskStatus.get_by_id(id)
+def get_status(id: str) -> TaskStatus | None:
+    try:
+        return TaskStatus.get_by_id(id)
+    except Exception as e:
+        logger.info(f"Not found task status: {e}")
+        return None
 
 
 def upsert_status(id: str, status: StatusType, error: str | None = None) -> TaskStatus:

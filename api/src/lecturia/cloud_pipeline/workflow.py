@@ -109,7 +109,7 @@ async def create_lecture(lecture_id: str | None = None, config: MovieConfig = Bo
     # Calculate audio segments with page transition duration
     audio_segments: list[AudioSegment] = []
     for audio_file in audio_files:
-        upload_data_to_public_bucket(audio_file.read_bytes(), f"lectures/{lecture_id}/audio_{audio_file.name}", "audio/mpeg")
+        upload_data_to_public_bucket(audio_file.read_bytes(), f"lectures/{lecture_id}/{audio_file.name}", "audio/mpeg")
         audio_segments.append(
             AudioSegment.from_mp3(audio_file) + AudioSegment.silent(duration=config.page_transition_duration_sec * 1000)
         )
