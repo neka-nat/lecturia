@@ -61,5 +61,6 @@ services:
       - .:/app
     environment:
       - STORAGE_EMULATOR_HOST=http://gcs:4443
+      - FIRESTORE_EMULATOR_HOST=firestore:8002
     env_file:
       - .env

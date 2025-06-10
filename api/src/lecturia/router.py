@@ -108,8 +108,8 @@ async def create_lecture(config: MovieConfig = Body(...)):
             body=config.model_dump_json().encode(),
         )
     )
-    # dispatch_deadline を 10 分（600 秒）に設定
-    task.dispatch_deadline = duration_pb2.Duration(seconds=600)
+    # dispatch_deadline を 15 分（900 秒）に設定
+    task.dispatch_deadline = duration_pb2.Duration(seconds=900)
     client.create_task(parent=parent, task=task)
     return {"task_id": task_id}
 

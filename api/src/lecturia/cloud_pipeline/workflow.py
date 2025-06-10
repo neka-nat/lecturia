@@ -18,6 +18,7 @@ from ..slide_editor import edit_slide
 from ..media import remove_long_silence
 from ..models import MovieConfig, EventList, Event
 from ..storage import is_exists_in_public_bucket, download_data_from_public_bucket, upload_data_to_public_bucket
+from ..firestore import upsert_status
 
 
 app = FastAPI()
@@ -28,6 +29,7 @@ async def create_lecture(lecture_id: str | None = None, config: MovieConfig = Bo
     if lecture_id is None:
         lecture_id = str(uuid.uuid4())
 
+    upsert_status(lecture_id, "processing")
     slide_maker = create_slide_maker_chain(config.web_search)
     slide_to_script = create_slide_to_script_chain(config.speakers)
     tts = create_tts_chain()
@@ -140,4 +142,5 @@ async def create_lecture(lecture_id: str | None = None, config: MovieConfig = Bo
         upload_data_to_public_bucket(events.model_dump_json(), f"lectures/{lecture_id}/events.json", "application/json")
 
     shutil.rmtree(temp_dir)
+    upsert_status(lecture_id, "completed")
     return {"lecture_id": lecture_id}
