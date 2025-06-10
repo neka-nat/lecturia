@@ -114,7 +114,6 @@ async def create_lecture(lecture_id: str | None = None, config: MovieConfig = Bo
             AudioSegment.from_mp3(audio_file) + AudioSegment.silent(duration=config.page_transition_duration_sec * 1000)
         )
     slide_page_event_sec = np.cumsum([len(audio_segment) / 1000 for audio_segment in audio_segments])
-    shutil.rmtree(temp_dir)
 
     if is_exists_in_public_bucket(f"lectures/{lecture_id}/events.json"):
         logger.info(f"Loading events.json from {f'lectures/{lecture_id}/events.json'}")
@@ -140,4 +139,5 @@ async def create_lecture(lecture_id: str | None = None, config: MovieConfig = Bo
         logger.info(f"Events: {events}")
         upload_data_to_public_bucket(events.model_dump_json(), f"lectures/{lecture_id}/events.json", "application/json")
 
+    shutil.rmtree(temp_dir)
     return {"lecture_id": lecture_id}
