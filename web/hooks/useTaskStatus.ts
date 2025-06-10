@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export type TaskStatus = 'not_started' | 'pending' | 'running' | 'completed' | 'failed';
 
@@ -15,6 +15,7 @@ export function useTaskStatus(taskId: string | null) {
   const [taskStatus, setTaskStatus] = useState<TaskStatusData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const currentStatusRef = useRef<TaskStatus | null>(null);
 
   const fetchTaskStatus = useCallback(async () => {
     if (!taskId) return;
@@ -30,6 +31,7 @@ export function useTaskStatus(taskId: string | null) {
       if (response.ok) {
         const statusData = await response.json();
         setTaskStatus(statusData);
+        currentStatusRef.current = statusData.status;
         
         // Auto-clear from localStorage after completion/failure with a delay
         if (statusData.status === 'completed' || statusData.status === 'failed') {
@@ -55,18 +57,29 @@ export function useTaskStatus(taskId: string | null) {
 
   useEffect(() => {
     if (taskId) {
+      // Reset status ref when task changes
+      currentStatusRef.current = null;
+      
+      // Initial fetch
       fetchTaskStatus();
       
       // Poll for status updates every 3 seconds for incomplete tasks
       const interval = setInterval(() => {
-        if (taskStatus?.status !== 'completed' && taskStatus?.status !== 'failed') {
+        // Check current status using ref to avoid stale closure
+        const currentStatus = currentStatusRef.current;
+        if (currentStatus !== 'completed' && currentStatus !== 'failed') {
           fetchTaskStatus();
         }
       }, 3000);
 
       return () => clearInterval(interval);
+    } else {
+      // Clear status when no taskId
+      setTaskStatus(null);
+      setError(null);
+      currentStatusRef.current = null;
     }
-  }, [taskId, fetchTaskStatus, taskStatus?.status]);
+  }, [taskId, fetchTaskStatus]);
 
   const getStatusDisplay = (status: TaskStatus): { text: string; color: string } => {
     switch (status) {
