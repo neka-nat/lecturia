@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useRef } from 'react';
 import { Header } from '../components/Header';
 import { BackgroundDecorations } from '../components/BackgroundDecorations';
 import { LectureForm } from '../components/LectureForm';
@@ -9,9 +10,17 @@ import { GlobalStyles } from '../components/GlobalStyles';
 
 export default function HomePage() {
   const router = useRouter();
+  const lectureListRef = useRef<{ refreshLectures: () => void } | null>(null);
 
   const handleLectureClick = (lectureId: string) => {
     router.push(`/lectures/${lectureId}`);
+  };
+
+  const handleTaskComplete = () => {
+    // Refresh the lecture list when a task completes
+    if (lectureListRef.current) {
+      lectureListRef.current.refreshLectures();
+    }
   };
 
   return (
@@ -22,8 +31,8 @@ export default function HomePage() {
         <Header />
         
         <div className="grid lg:grid-cols-5 gap-8">
-          <LectureForm />
-          <LectureList onLectureClick={handleLectureClick} />
+          <LectureForm onTaskComplete={handleTaskComplete} />
+          <LectureList ref={lectureListRef} onLectureClick={handleLectureClick} />
         </div>
       </div>
 

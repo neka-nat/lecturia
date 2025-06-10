@@ -138,7 +138,7 @@ def _create_event_phase(
 @app.post("/tasks/create-lecture")
 async def create_lecture(lecture_id: str, config: MovieConfig = Body(...)):
 
-    upsert_status(lecture_id, "running")
+    upsert_status(lecture_id, "running", progress_percentage=0, current_phase="初期化中")
     
     try:
         speaker_left_right_map = {
@@ -157,17 +157,29 @@ async def create_lecture(lecture_id: str, config: MovieConfig = Body(...)):
                 sprite_path = Path(__file__).parent.parent.resolve() / "html" / character.sprite_name
                 upload_data_to_public_bucket(sprite_path.read_bytes(), f"lectures/{lecture_id}/sprites/left.png", "image/png")
 
+        # Phase 1: Create slides (25% progress)
+        upsert_status(lecture_id, "running", progress_percentage=10, current_phase="スライド生成中")
         result_slide = _create_slide_phase(lecture_id, config)
+        
+        # Phase 2: Create script (50% progress)
+        upsert_status(lecture_id, "running", progress_percentage=25, current_phase="スクリプト作成中")
         result_script = _create_script_phase(lecture_id, config, result_slide)
 
+        # Phase 3: Generate audio (75% progress)
+        upsert_status(lecture_id, "running", progress_percentage=50, current_phase="音声生成中")
         temp_dir = tempfile.mkdtemp()
         audio_files, slide_page_event_sec = _generate_audio_phase(lecture_id, config, result_script, temp_dir)
+        
+        # Phase 4: Create events (90% progress)
+        upsert_status(lecture_id, "running", progress_percentage=75, current_phase="イベント作成中")
         _create_event_phase(lecture_id, result_slide, result_script, audio_files, slide_page_event_sec, speaker_left_right_map)
 
+        # Cleanup and completion (100% progress)
+        upsert_status(lecture_id, "running", progress_percentage=95, current_phase="最終処理中")
         shutil.rmtree(temp_dir)
-        upsert_status(lecture_id, "completed")
+        upsert_status(lecture_id, "completed", progress_percentage=100, current_phase="完了")
     except Exception as e:
         logger.error(f"Error creating lecture {lecture_id}: {str(e)}")
-        upsert_status(lecture_id, "failed", str(e))
+        upsert_status(lecture_id, "failed", error=str(e), current_phase="エラー")
         raise
     return {"lecture_id": lecture_id}

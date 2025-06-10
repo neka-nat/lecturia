@@ -2,7 +2,11 @@ import { Plus, Sparkles, Loader2, CheckCircle, XCircle, Clock } from 'lucide-rea
 import { useLectureForm } from '../hooks/useLectureForm';
 import { useTaskStatus } from '../hooks/useTaskStatus';
 
-export function LectureForm() {
+interface LectureFormProps {
+  onTaskComplete?: () => void;
+}
+
+export function LectureForm({ onTaskComplete }: LectureFormProps) {
   const {
     topic,
     setTopic,
@@ -14,7 +18,7 @@ export function LectureForm() {
     clearTaskId,
   } = useLectureForm();
 
-  const { taskStatus, isLoading: isStatusLoading, error: statusError, getStatusDisplay } = useTaskStatus(currentTaskId);
+  const { taskStatus, isLoading: isStatusLoading, error: statusError, getStatusDisplay } = useTaskStatus(currentTaskId, onTaskComplete);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,7 +118,7 @@ export function LectureForm() {
                   <span className="text-sm">ステータス確認中...</span>
                 </div>
               ) : taskStatus ? (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     {taskStatus.status === 'completed' && <CheckCircle className="w-4 h-4 text-green-500" />}
                     {taskStatus.status === 'failed' && <XCircle className="w-4 h-4 text-red-500" />}
@@ -123,6 +127,24 @@ export function LectureForm() {
                     <span className={`text-sm font-medium ${getStatusDisplay(taskStatus.status).color}`}>
                       {getStatusDisplay(taskStatus.status).text}
                     </span>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500">
+                        {taskStatus.current_phase || '待機中'}
+                      </span>
+                      <span className="text-slate-500">
+                        {taskStatus.progress_percentage}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-2">
+                      <div
+                        className="bg-gradient-to-r from-indigo-500 to-purple-600 h-2 rounded-full transition-all duration-300 ease-out"
+                        style={{ width: `${taskStatus.progress_percentage}%` }}
+                      ></div>
+                    </div>
                   </div>
                   
                   {taskStatus.error && (
@@ -137,7 +159,7 @@ export function LectureForm() {
 
                   {taskStatus.status === 'completed' && (
                     <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
-                      講義の作成が完了しました。講義一覧をご確認ください。
+                      講義の作成が完了しました。講義一覧に追加されました。
                     </div>
                   )}
                 </div>
