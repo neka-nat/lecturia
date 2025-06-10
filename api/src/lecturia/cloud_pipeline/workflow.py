@@ -37,6 +37,9 @@ async def create_lecture(lecture_id: str | None = None, config: MovieConfig = Bo
         speaker.name: "right" if i == 0 else "left" for i, speaker in enumerate(config.speakers)
     }
 
+    # upload movie_config.json
+    upload_data_to_public_bucket(config.model_dump_json(), f"lectures/{lecture_id}/movie_config.json", "application/json")
+
     # upload sprites
     for i, character in enumerate(config.characters):
         if i == 0:
