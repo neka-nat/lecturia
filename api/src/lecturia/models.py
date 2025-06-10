@@ -47,6 +47,7 @@ class MovieConfig(BaseModel):
         Character(name="speaker1", role="講師", sprite_name="sprite_woman.png", voice_type="woman")
     ]
     web_search: bool = False
+    created_at: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
 
     @property
     def sprite_names(self) -> list[str]:

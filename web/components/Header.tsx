@@ -13,7 +13,7 @@ export function Header() {
         </h1>
       </div>
       <p className="text-xl text-slate-600 font-medium">
-        AI で作る、あなただけの学び方
+        AI で創る、あなただけの学び方
       </p>
       <div className="w-24 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 mx-auto mt-4 rounded-full"></div>
     </div>

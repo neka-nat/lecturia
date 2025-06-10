@@ -5,7 +5,6 @@ from loguru import logger
 
 
 _GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME = os.environ["GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME"]
-_GOOGLE_CLOUD_STORAGE_PRIVATE_BUCKET_NAME = os.environ["GOOGLE_CLOUD_STORAGE_PRIVATE_BUCKET_NAME"]
 
 
 def upload_data(
@@ -27,14 +26,6 @@ def upload_data_to_public_bucket(
     mime_type: str = "application/octet-stream",
 ) -> str:
     return upload_data(data, path, _GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME, mime_type)
-
-
-def upload_data_to_private_bucket(
-    data: bytes | str,
-    path: str,
-    mime_type: str = "application/octet-stream",
-) -> str:
-    return upload_data(data, path, _GOOGLE_CLOUD_STORAGE_PRIVATE_BUCKET_NAME, mime_type)
 
 
 def is_exists_in_public_bucket(path: str) -> bool:

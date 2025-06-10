@@ -1,5 +1,5 @@
 from os import environ
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Literal
 
 import google.auth.credentials
@@ -27,8 +27,8 @@ class TaskStatus(Model):
     __collection__ = "task_status"
     status: StatusType = "not_started"
     error: str | None = None
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=datetime.now(timezone.utc))
 
 
 def get_status(id: str) -> TaskStatus:
@@ -41,6 +41,6 @@ def upsert_status(id: str, status: StatusType, error: str | None = None) -> Task
         task_status = TaskStatus(id=id)
     task_status.status = status
     task_status.error = error
-    task_status.updated_at = datetime.now()
+    task_status.updated_at = datetime.now(timezone.utc)
     task_status.save()
     return task_status

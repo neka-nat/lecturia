@@ -18,8 +18,8 @@ from .firestore import TaskStatus, get_status, upsert_status
 
 class LectureInfo(BaseModel):
     id: str
-    title: str
     topic: str
+    detail: str | None = None
     created_at: str
 
 
@@ -30,15 +30,25 @@ router = fastapi.APIRouter()
 async def list_lectures() -> list[LectureInfo]:
     lectures = ls_public_bucket("lectures")
     logger.info(f"Lectures: {lectures}")
-    return [
-        LectureInfo(
-            id=lecture,
-            title="サンプル講義",
-            topic="テストトピック",
-            created_at="2025-06-07"
-        )
-        for lecture in lectures
-    ]
+    lecture_infos: list[LectureInfo] = []
+    for lecture_id in lectures:
+        json_str = download_data_from_public_bucket(f"lectures/{lecture_id}/movie_config.json")
+        if json_str is None:
+            lecture_infos.append(LectureInfo(
+                id=lecture_id,
+                topic="<無題>",
+                detail="無し",
+                created_at="",
+            ))
+        else:
+            movie_config = MovieConfig.model_validate_json(json_str)
+            lecture_infos.append(LectureInfo(
+                id=lecture_id,
+                topic=movie_config.topic,
+                detail=movie_config.detail,
+                created_at="",
+            ))
+    return lecture_infos
 
 
 @router.get("/lectures/{lecture_id}/manifest")

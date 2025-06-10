@@ -45,6 +45,7 @@ services:
     environment:
       - STORAGE_EMULATOR_HOST=http://gcs:4443
       - WORKER_URL=http://worker:8001
+      - FIRESTORE_EMULATOR_HOST=0.0.0.0:8002
     env_file:
       - .env
     depends_on:

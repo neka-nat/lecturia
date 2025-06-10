@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 
 export interface Lecture {
   id: string;
-  title: string;
   topic: string;
+  detail: string | null;
   created_at: string;
 }
 

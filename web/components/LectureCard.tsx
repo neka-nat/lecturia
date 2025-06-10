@@ -26,11 +26,11 @@ export function LectureCard({ lecture, index, onLectureClick, onDeleteLecture }:
               <Play className="w-4 h-4 text-white" />
             </div>
             <h3 className="font-bold text-slate-800 text-lg truncate group-hover:text-indigo-600 transition-colors">
-              {lecture.title}
+              {lecture.topic}
             </h3>
           </div>
           <p className="text-slate-600 mb-3 line-clamp-2">
-            {lecture.topic}
+            {lecture.detail}
           </p>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1 text-sm text-slate-500">
@@ -47,7 +47,7 @@ export function LectureCard({ lecture, index, onLectureClick, onDeleteLecture }:
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onDeleteLecture(lecture.id, lecture.title);
+              onDeleteLecture(lecture.id, lecture.topic);
             }}
             className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100"
             title="講義を削除"

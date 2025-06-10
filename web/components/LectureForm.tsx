@@ -47,7 +47,7 @@ export function LectureForm() {
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   className="w-full px-4 py-3 bg-white/70 border-2 border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300"
-                  placeholder="例: 機械学習の基礎"
+                  placeholder="例: 大化の改新について、AWSの基礎、など"
                   required
                 />
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-500/5 to-purple-500/5 pointer-events-none opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
