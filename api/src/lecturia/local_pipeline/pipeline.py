@@ -51,9 +51,7 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
                 "callbacks": [ConsoleCallbackHandler()],
             },
         )
-        # Avoid rate limit
-        time.sleep(60)
-        result_slide = edit_slide(result_slide)
+        result_slide = edit_slide(result_slide, use_refiner=False)
         with open(work_dir / "result_slide.html", "w") as f:
             f.write(result_slide.export_embed_images())
 

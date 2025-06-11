@@ -10,11 +10,14 @@ from .chains.slide_maker import HtmlSlide
 from .chains.slide_refiner import create_slide_refiner_chain
 
 
-def edit_slide(slide: HtmlSlide) -> HtmlSlide:
+def edit_slide(slide: HtmlSlide, use_refiner: bool = True) -> HtmlSlide:
     logger.info("Editing slide")
-    refiner = create_slide_refiner_chain()
-    refined_slide = refiner.invoke({"before_slide": slide.html})
-    soup = BeautifulSoup(refined_slide.html, "html.parser")
+    if use_refiner:
+        refiner = create_slide_refiner_chain()
+        refined_slide = refiner.invoke({"before_slide": slide.html})
+        soup = BeautifulSoup(refined_slide.html, "html.parser")
+    else:
+        soup = BeautifulSoup(slide.html, "html.parser")
     # imgタグを探す
     img_tags = soup.find_all("img")
     image_map = {}

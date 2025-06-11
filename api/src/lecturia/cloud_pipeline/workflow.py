@@ -40,9 +40,7 @@ def _create_slide_phase(lecture_id: str, config: MovieConfig) -> HtmlSlide:
                 "callbacks": [ConsoleCallbackHandler()],
             },
         )
-        # Avoid rate limit
-        time.sleep(60)
-        result_slide = edit_slide(result_slide)
+        result_slide = edit_slide(result_slide, use_refiner=False)
         upload_data_to_public_bucket(result_slide.export_embed_images(), f"lectures/{lecture_id}/result_slide.html", "text/html")
     return result_slide
 
