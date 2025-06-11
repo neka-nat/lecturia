@@ -19,14 +19,26 @@ class Event(BaseModel):
         name: イベントの名前
         target: イベントの対象となるキャラクター
     """
-    type: Literal["start", "pose", "slideNext", "slidePrev", "slideStep", "end"]
+    type: Literal["start", "pose", "slideNext", "slidePrev", "slideStep", "quiz", "end"]
     time_sec: float
     name: str | None = None
     target: Literal["left", "right"] | None = None   # イベントの対象となるキャラクター
 
 
+class Quiz(BaseModel):
+    name: str
+    slide_no: int
+    question: str
+    choices: list[str]
+    answer_index: int
+
+
 class EventList(BaseModel):
     events: list[Event]
+
+
+class QuizList(BaseModel):
+    quizzes: list[Quiz]
 
 
 class Character(BaseModel):
@@ -65,6 +77,13 @@ class MovieConfig(BaseModel):
 
 
 class Manifest(BaseModel):
+    """
+    講義のマニフェスト
+
+    Args:
+        id: 講義のID
+        title: 講義のタイトル
+    """
     id: uuid.UUID
     title: str
     slide_url: str
