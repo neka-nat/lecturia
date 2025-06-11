@@ -64,7 +64,7 @@ def _create_script_phase(lecture_id: str, config: MovieConfig, result_slide: Htm
     return result_script
 
 
-def _generate_audio_phase(lecture_id: str, config: MovieConfig, result_script: ScriptList, temp_dir: str) -> tuple[list[Path], np.ndarray]:
+async def _generate_audio_phase(lecture_id: str, config: MovieConfig, result_script: ScriptList, temp_dir: str) -> tuple[list[Path], np.ndarray]:
     tts = create_tts_chain()
     audio_files: list[Path] = []
     for script in result_script.scripts:
@@ -72,7 +72,7 @@ def _generate_audio_phase(lecture_id: str, config: MovieConfig, result_script: S
         if not is_exists_in_public_bucket(f"lectures/{lecture_id}/audio_{script.slide_no}.mp3"):
             if len(config.characters) == 1:
                 text = script.script[0].content
-                audio = tts.invoke(text, voice_type=config.characters[0].voice_type)
+                audio = await tts.ainvoke(text, voice_type=config.characters[0].voice_type)
             else:
                 talks = [
                     Talk(
@@ -82,7 +82,7 @@ def _generate_audio_phase(lecture_id: str, config: MovieConfig, result_script: S
                     )
                     for speaker in script.script
                 ]
-                audio = tts.multi_speaker_invoke(talks)
+                audio = await tts.multi_speaker_ainvoke(talks)
             audio.save_mp3(str(audio_file))
             removed_silence_audio = remove_long_silence(AudioSegment.from_mp3(audio_file))
             removed_silence_audio.export(audio_file, format="mp3")
@@ -100,7 +100,7 @@ def _generate_audio_phase(lecture_id: str, config: MovieConfig, result_script: S
     return audio_files, slide_page_event_sec
 
 
-def _create_event_phase(
+async def _create_event_phase(
     lecture_id: str,
     result_slide: HtmlSlide,
     result_script: ScriptList,
@@ -121,7 +121,7 @@ def _create_event_phase(
                 if len(speaker_left_right_map) > 1
                 else None
             )
-            events_anim: EventList = event_extractor.invoke(result_slide.html, slide_no + 1, audio_file, first_speaker)
+            events_anim: EventList = await event_extractor.ainvoke(result_slide.html, slide_no + 1, audio_file, first_speaker)
             prev_sec = slide_page_event_sec[slide_no - 1] if slide_no > 0 else 0
             events.events.extend(
                 [
@@ -168,11 +168,11 @@ async def create_lecture(lecture_id: str, config: MovieConfig = Body(...)):
         # Phase 3: Generate audio (75% progress)
         upsert_status(lecture_id, "running", progress_percentage=50, current_phase="音声生成中")
         temp_dir = tempfile.mkdtemp()
-        audio_files, slide_page_event_sec = _generate_audio_phase(lecture_id, config, result_script, temp_dir)
+        audio_files, slide_page_event_sec = await _generate_audio_phase(lecture_id, config, result_script, temp_dir)
         
         # Phase 4: Create events (90% progress)
         upsert_status(lecture_id, "running", progress_percentage=75, current_phase="イベント作成中")
-        _create_event_phase(lecture_id, result_slide, result_script, audio_files, slide_page_event_sec, speaker_left_right_map)
+        await _create_event_phase(lecture_id, result_slide, result_script, audio_files, slide_page_event_sec, speaker_left_right_map)
 
         # Cleanup and completion (100% progress)
         upsert_status(lecture_id, "running", progress_percentage=95, current_phase="最終処理中")

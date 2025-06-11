@@ -77,7 +77,7 @@ class EventExtractor(Runnable):
         self.client = genai.Client()
         self.model = "gemini-2.5-flash-preview-05-20"
 
-    def invoke(
+    async def ainvoke(
         self,
         slides_html: str,
         slide_no: int,
@@ -85,7 +85,7 @@ class EventExtractor(Runnable):
         first_speaker: Literal["left", "right"] | None = None,
     ) -> EventList:
         file = self.client.files.upload(file=audio_file)
-        response = self.client.models.generate_content(
+        response = await self.client.aio.models.generate_content(
             model=self.model,
             contents=[
                 file,

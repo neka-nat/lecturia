@@ -1,3 +1,4 @@
+import asyncio
 from typing import Literal
 
 from langchain_core.runnables import Runnable
@@ -58,7 +59,7 @@ class TTS(Runnable):
     def __init__(self):
         self.client = OpenAI()
 
-    def invoke(self, text: str, voice_type: VoiceTypes | None = None) -> TextToAudioResponse:
+    async def ainvoke(self, text: str, voice_type: VoiceTypes | None = None) -> TextToAudioResponse:
         voice_type = voice_type or "woman"
         req = TextToAudioRequest(
             text=text,
@@ -66,10 +67,10 @@ class TTS(Runnable):
             instructions=_voice_types_map[voice_type].instructions,
         )
         client = GoogleTTSClient()
-        response = client.text_to_audio(req)
+        response = await asyncio.to_thread(client.text_to_audio, req)
         return response
 
-    def multi_speaker_invoke(self, talks: list[Talk]) -> TextToAudioResponse:
+    async def multi_speaker_ainvoke(self, talks: list[Talk]) -> TextToAudioResponse:
         req = MultiSpeakerTextToAudioRequest(
             speakers=[
                 SpeakerTextToAudioRequest(
@@ -82,7 +83,7 @@ class TTS(Runnable):
             instructions="TTS the following conversation between two speakers, " + "and ".join([f"{talk.speaker_name}" for talk in talks]) + ".",
         )
         client = GoogleTTSClient()
-        response = client.multi_speaker_text_to_audio(req)
+        response = await asyncio.to_thread(client.multi_speaker_text_to_audio, req)
         return response
 
 

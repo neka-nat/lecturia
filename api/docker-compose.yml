@@ -10,7 +10,7 @@ services:
       ["-scheme", "http", "-port", "4443", "-external-url", "http://gcs:4443"]
   gcloud-tasks-emulator:
     image: ghcr.io/aertje/cloud-tasks-emulator:latest
-    command: -host 0.0.0.0 -port 8123 -queue "projects/${PROJECT_ID}/locations/asia-northeast1/queues/lecture-queue"
+    command: -host 0.0.0.0 -port 8123 -queue "projects/${GOOGLE_CLOUD_PROJECT}/locations/asia-northeast1/queues/lecture-queue"
     ports:
       - "${TASKS_PORT:-8123}:8123"
     environment:
@@ -22,11 +22,11 @@ services:
       args:
         FIREBASE_VERSION: 13.3.0
     container_name: firestore-emulator
-    command: ["firebase", "emulators:start", "--project=${PROJECT_ID}", "--only", "firestore"]
+    command: ["firebase", "emulators:start", "--project=${GOOGLE_CLOUD_PROJECT}", "--only", "firestore"]
     environment:
       - FIRESTORE_EMULATOR_HOST=0.0.0.0:8002
-      - FIREBASE_PROJECT=${PROJECT_ID}
-      - GCLOUD_PROJECT=${PROJECT_ID}
+      - FIREBASE_PROJECT=${GOOGLE_CLOUD_PROJECT}
+      - GCLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
     ports:
       - "4000:4000"   # Emulator UI
       - "8002:8002"   # Firestore

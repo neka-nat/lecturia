@@ -77,7 +77,7 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
         if not audio_file.exists():
             if len(config.characters) == 1:
                 text = script.script[0].content
-                audio = tts.invoke(text, voice_type=config.characters[0].voice_type)
+                audio = await tts.ainvoke(text, voice_type=config.characters[0].voice_type)
             else:
                 talks = [
                     Talk(
@@ -87,7 +87,7 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
                     )
                     for speaker in script.script
                 ]
-                audio = tts.multi_speaker_invoke(talks)
+                audio = await tts.multi_speaker_ainvoke(talks)
             audio.save_mp3(str(audio_file))
             removed_silence_audio = remove_long_silence(AudioSegment.from_mp3(audio_file))
             removed_silence_audio.export(audio_file, format="mp3")
@@ -119,7 +119,7 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
                 if len(speaker_left_right_map) > 1
                 else None
             )
-            events_anim: EventList = event_extractor.invoke(result_slide.html, slide_no + 1, audio_file, first_speaker)
+            events_anim: EventList = await event_extractor.ainvoke(result_slide.html, slide_no + 1, audio_file, first_speaker)
             prev_sec = slide_page_event_sec[slide_no - 1] if slide_no > 0 else 0
             events.events.extend(
                 [
