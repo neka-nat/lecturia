@@ -7,3 +7,5 @@ api/lecturia-public-storage/**/*.png
 api/lecturia-public-storage/**/*.mp4
 
 .terraform
+
+*.log

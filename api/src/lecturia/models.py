@@ -26,19 +26,23 @@ class Event(BaseModel):
 
 
 class Quiz(BaseModel):
-    name: str
-    slide_no: int
     question: str
     choices: list[str]
     answer_index: int
+
+
+class QuizSection(BaseModel):
+    name: str
+    slide_no: int
+    quizzes: list[Quiz]
 
 
 class EventList(BaseModel):
     events: list[Event]
 
 
-class QuizList(BaseModel):
-    quizzes: list[Quiz]
+class QuizSectionList(BaseModel):
+    quiz_sections: list[QuizSection]
 
 
 class Character(BaseModel):
