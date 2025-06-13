@@ -185,45 +185,48 @@ export const Player: React.FC<Props> = ({ manifest }) => {
 
       <audio ref={audioRef} preload="auto" />
 
-      {/* Playback Controls */}
-      <div style={{position:'absolute',top:10,right:10,zIndex:20}}>
-        <button onClick={handlePlay}>▶︎</button>{' '}
-        <button onClick={handlePause}>⏸</button>{' '}
-        <button onClick={handleStop}>◼︎</button>
-      </div>
-
-      {/* Slide Navigation Controls */}
-      <div style={{position:'absolute',top:10,left:10,zIndex:20,background:'rgba(255,255,255,0.9)',padding:'10px',borderRadius:'8px',display:'flex',alignItems:'center',gap:'10px'}}>
-        <div style={{fontWeight:'bold',color:'#333'}}>
-          スライド {pageIdx + 1} / {eventsPages.length}
+      {/* Integrated Controls - Slide Navigation + Playback */}
+      <div style={{position:'absolute',top:10,right:10,zIndex:20,background:'rgba(255,255,255,0.9)',padding:'10px',borderRadius:'8px',display:'flex',alignItems:'center',gap:'12px'}}>
+        {/* Slide Navigation */}
+        <div style={{display:'flex',alignItems:'center',gap:'8px',borderRight:'1px solid #ddd',paddingRight:'12px'}}>
+          <div style={{fontWeight:'bold',color:'#333',fontSize:'14px'}}>
+            スライド {pageIdx + 1} / {eventsPages.length}
+          </div>
+          <button 
+            onClick={handlePrevSlide} 
+            disabled={pageIdx === 0}
+            style={{padding:'4px 8px',cursor:pageIdx === 0 ? 'not-allowed' : 'pointer',opacity:pageIdx === 0 ? 0.5 : 1,border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa'}}
+          >
+            ◀
+          </button>
+          <button 
+            onClick={handleNextSlide} 
+            disabled={pageIdx >= eventsPages.length - 1}
+            style={{padding:'4px 8px',cursor:pageIdx >= eventsPages.length - 1 ? 'not-allowed' : 'pointer',opacity:pageIdx >= eventsPages.length - 1 ? 0.5 : 1,border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa'}}
+          >
+            ▶
+          </button>
+          <input 
+            type="number" 
+            min="1" 
+            max={eventsPages.length}
+            value={jumpToSlide}
+            onChange={(e)=>setJumpToSlide(e.target.value)}
+            onKeyDown={(e)=>e.key==='Enter' && handleJumpToSlide()}
+            placeholder="番号"
+            style={{width:'50px',padding:'4px',textAlign:'center',border:'1px solid #ccc',borderRadius:'4px',fontSize:'12px'}}
+          />
+          <button onClick={handleJumpToSlide} style={{padding:'4px 6px',border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa',fontSize:'12px'}}>
+            移動
+          </button>
         </div>
-        <button 
-          onClick={handlePrevSlide} 
-          disabled={pageIdx === 0}
-          style={{padding:'4px 8px',cursor:pageIdx === 0 ? 'not-allowed' : 'pointer',opacity:pageIdx === 0 ? 0.5 : 1}}
-        >
-          ◀
-        </button>
-        <button 
-          onClick={handleNextSlide} 
-          disabled={pageIdx >= eventsPages.length - 1}
-          style={{padding:'4px 8px',cursor:pageIdx >= eventsPages.length - 1 ? 'not-allowed' : 'pointer',opacity:pageIdx >= eventsPages.length - 1 ? 0.5 : 1}}
-        >
-          ▶
-        </button>
-        <input 
-          type="number" 
-          min="1" 
-          max={eventsPages.length}
-          value={jumpToSlide}
-          onChange={(e)=>setJumpToSlide(e.target.value)}
-          onKeyDown={(e)=>e.key==='Enter' && handleJumpToSlide()}
-          placeholder="番号"
-          style={{width:'60px',padding:'4px',textAlign:'center'}}
-        />
-        <button onClick={handleJumpToSlide} style={{padding:'4px 8px'}}>
-          移動
-        </button>
+        
+        {/* Playback Controls */}
+        <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
+          <button onClick={handlePlay} style={{padding:'6px 10px',border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa',fontSize:'16px',cursor:'pointer'}}>▶︎</button>
+          <button onClick={handlePause} style={{padding:'6px 10px',border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa',fontSize:'16px',cursor:'pointer'}}>⏸</button>
+          <button onClick={handleStop} style={{padding:'6px 10px',border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa',fontSize:'16px',cursor:'pointer'}}>◼︎</button>
+        </div>
       </div>
     </div>
   );
