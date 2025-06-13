@@ -30,7 +30,7 @@ export function CharacterSelector({ selectedCharacter, onCharacterChange }: Char
       >
         {AVAILABLE_CHARACTERS.map((character) => (
           <option key={character.name} value={character.name}>
-            {character.role} ({character.name} - {character.voice_type})
+            {character.role}
           </option>
         ))}
       </select>
