@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { Character, AVAILABLE_CHARACTERS } from '../types/character';
 
 const TASK_ID_STORAGE_KEY = 'lecturia-current-task-id';
 
 export function useLectureForm() {
   const [topic, setTopic] = useState('');
   const [detail, setDetail] = useState('');
+  const [selectedCharacter, setSelectedCharacter] = useState<Character>(AVAILABLE_CHARACTERS[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
 
@@ -31,6 +33,7 @@ export function useLectureForm() {
           body: JSON.stringify({
             topic: topic.trim(),
             detail: detail.trim() || null,
+            characters: [selectedCharacter],
           }),
         }
       );
@@ -72,6 +75,8 @@ export function useLectureForm() {
     setTopic,
     detail,
     setDetail,
+    selectedCharacter,
+    setSelectedCharacter,
     isSubmitting,
     createLecture,
     resetForm,

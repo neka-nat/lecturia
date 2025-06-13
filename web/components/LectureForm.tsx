@@ -1,6 +1,7 @@
 import { Plus, Sparkles, Loader2, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { useLectureForm } from '../hooks/useLectureForm';
 import { useTaskStatus } from '../hooks/useTaskStatus';
+import { CharacterSelector } from './CharacterSelector';
 
 interface LectureFormProps {
   onTaskComplete?: () => void;
@@ -12,6 +13,8 @@ export function LectureForm({ onTaskComplete }: LectureFormProps) {
     setTopic,
     detail,
     setDetail,
+    selectedCharacter,
+    setSelectedCharacter,
     isSubmitting,
     createLecture,
     currentTaskId,
@@ -71,6 +74,11 @@ export function LectureForm({ onTaskComplete }: LectureFormProps) {
                 placeholder="講義の詳細内容を入力してください..."
               />
             </div>
+
+            <CharacterSelector
+              selectedCharacter={selectedCharacter}
+              onCharacterChange={setSelectedCharacter}
+            />
             
             <button
               type="submit"
