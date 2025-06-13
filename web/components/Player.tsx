@@ -34,6 +34,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
 
   const [pageIdx, setPageIdx]   = useState(0);   // current page (0‑based)
   const [slideReady, setReady]  = useState(false);
+  const [jumpToSlide, setJumpToSlide] = useState(''); // input for slide navigation
   const hasInteracted           = useRef(false); // ▶︎ pressed once?
 
   /* -------------------------------------------------------------
@@ -156,6 +157,16 @@ export const Player: React.FC<Props> = ({ manifest }) => {
   const handlePause = ()=> audioRef.current?.pause();
   const handleStop = ()=>{ audioRef.current?.pause(); if(audioRef.current) audioRef.current.currentTime = 0; hasInteracted.current=false; goTo(0); };
 
+  /* slide navigation handlers */
+  const handlePrevSlide = ()=> goTo(pageIdx - 1);
+  const handleNextSlide = ()=> goTo(pageIdx + 1);
+  const handleJumpToSlide = ()=>{
+    const slideNum = parseInt(jumpToSlide);
+    if(isNaN(slideNum) || slideNum < 1 || slideNum > eventsPages.length) return;
+    goTo(slideNum - 1); // convert 1-based to 0-based
+    setJumpToSlide('');
+  };
+
   /* -------------------------------------------------------------
      Render
   ------------------------------------------------------------- */
@@ -174,8 +185,45 @@ export const Player: React.FC<Props> = ({ manifest }) => {
 
       <audio ref={audioRef} preload="auto" />
 
+      {/* Playback Controls */}
       <div style={{position:'absolute',top:10,right:10,zIndex:20}}>
-        <button onClick={handlePlay}>▶︎</button>{' '}<button onClick={handlePause}>⏸</button>{' '}<button onClick={handleStop}>◼︎</button>
+        <button onClick={handlePlay}>▶︎</button>{' '}
+        <button onClick={handlePause}>⏸</button>{' '}
+        <button onClick={handleStop}>◼︎</button>
+      </div>
+
+      {/* Slide Navigation Controls */}
+      <div style={{position:'absolute',top:10,left:10,zIndex:20,background:'rgba(255,255,255,0.9)',padding:'10px',borderRadius:'8px',display:'flex',alignItems:'center',gap:'10px'}}>
+        <div style={{fontWeight:'bold',color:'#333'}}>
+          スライド {pageIdx + 1} / {eventsPages.length}
+        </div>
+        <button 
+          onClick={handlePrevSlide} 
+          disabled={pageIdx === 0}
+          style={{padding:'4px 8px',cursor:pageIdx === 0 ? 'not-allowed' : 'pointer',opacity:pageIdx === 0 ? 0.5 : 1}}
+        >
+          ◀
+        </button>
+        <button 
+          onClick={handleNextSlide} 
+          disabled={pageIdx >= eventsPages.length - 1}
+          style={{padding:'4px 8px',cursor:pageIdx >= eventsPages.length - 1 ? 'not-allowed' : 'pointer',opacity:pageIdx >= eventsPages.length - 1 ? 0.5 : 1}}
+        >
+          ▶
+        </button>
+        <input 
+          type="number" 
+          min="1" 
+          max={eventsPages.length}
+          value={jumpToSlide}
+          onChange={(e)=>setJumpToSlide(e.target.value)}
+          onKeyDown={(e)=>e.key==='Enter' && handleJumpToSlide()}
+          placeholder="番号"
+          style={{width:'60px',padding:'4px',textAlign:'center'}}
+        />
+        <button onClick={handleJumpToSlide} style={{padding:'4px 8px'}}>
+          移動
+        </button>
       </div>
     </div>
   );
