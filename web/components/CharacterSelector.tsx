@@ -7,6 +7,14 @@ interface CharacterSelectorProps {
 }
 
 export function CharacterSelector({ selectedCharacter, onCharacterChange }: CharacterSelectorProps) {
+  const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedName = event.target.value;
+    const character = AVAILABLE_CHARACTERS.find(c => c.name === selectedName);
+    if (character) {
+      onCharacterChange(character);
+    }
+  };
+
   return (
     <div className="space-y-2">
       <label className="block text-sm font-semibold text-slate-700">
@@ -15,37 +23,17 @@ export function CharacterSelector({ selectedCharacter, onCharacterChange }: Char
           キャラクター選択
         </div>
       </label>
-      <div className="grid grid-cols-1 gap-3">
+      <select
+        value={selectedCharacter.name}
+        onChange={handleSelectChange}
+        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800"
+      >
         {AVAILABLE_CHARACTERS.map((character) => (
-          <div
-            key={character.name}
-            className={`relative p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-              selectedCharacter.name === character.name
-                ? 'border-indigo-500 bg-indigo-50/50 shadow-md'
-                : 'border-slate-200 bg-white/70 hover:border-slate-300 hover:bg-slate-50/50'
-            }`}
-            onClick={() => onCharacterChange(character)}
-          >
-            <div className="flex items-center space-x-3">
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                selectedCharacter.name === character.name
-                  ? 'border-indigo-500 bg-indigo-500'
-                  : 'border-slate-300'
-              }`}>
-                {selectedCharacter.name === character.name && (
-                  <div className="w-2 h-2 rounded-full bg-white"></div>
-                )}
-              </div>
-              <div className="flex-1">
-                <div className="font-medium text-slate-800">{character.role}</div>
-                <div className="text-sm text-slate-500">
-                  {character.name} ({character.voice_type})
-                </div>
-              </div>
-            </div>
-          </div>
+          <option key={character.name} value={character.name}>
+            {character.role} ({character.name} - {character.voice_type})
+          </option>
         ))}
-      </div>
+      </select>
     </div>
   );
 }
