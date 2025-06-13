@@ -195,14 +195,14 @@ export const Player: React.FC<Props> = ({ manifest }) => {
           <button 
             onClick={handlePrevSlide} 
             disabled={pageIdx === 0}
-            style={{padding:'4px 8px',cursor:pageIdx === 0 ? 'not-allowed' : 'pointer',opacity:pageIdx === 0 ? 0.5 : 1,border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa'}}
+            style={{padding:'4px 8px',cursor:pageIdx === 0 ? 'not-allowed' : 'pointer',opacity:pageIdx === 0 ? 0.5 : 1,border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa',color:'#333'}}
           >
             ◀
           </button>
           <button 
             onClick={handleNextSlide} 
             disabled={pageIdx >= eventsPages.length - 1}
-            style={{padding:'4px 8px',cursor:pageIdx >= eventsPages.length - 1 ? 'not-allowed' : 'pointer',opacity:pageIdx >= eventsPages.length - 1 ? 0.5 : 1,border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa'}}
+            style={{padding:'4px 8px',cursor:pageIdx >= eventsPages.length - 1 ? 'not-allowed' : 'pointer',opacity:pageIdx >= eventsPages.length - 1 ? 0.5 : 1,border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa',color:'#333'}}
           >
             ▶
           </button>
@@ -214,18 +214,18 @@ export const Player: React.FC<Props> = ({ manifest }) => {
             onChange={(e)=>setJumpToSlide(e.target.value)}
             onKeyDown={(e)=>e.key==='Enter' && handleJumpToSlide()}
             placeholder="番号"
-            style={{width:'50px',padding:'4px',textAlign:'center',border:'1px solid #ccc',borderRadius:'4px',fontSize:'12px'}}
+            style={{width:'50px',padding:'4px',textAlign:'center',border:'1px solid #ccc',borderRadius:'4px',fontSize:'12px',color:'#333'}}
           />
-          <button onClick={handleJumpToSlide} style={{padding:'4px 6px',border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa',fontSize:'12px'}}>
+          <button onClick={handleJumpToSlide} style={{padding:'4px 6px',border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa',fontSize:'12px',color:'#333'}}>
             移動
           </button>
         </div>
         
         {/* Playback Controls */}
         <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
-          <button onClick={handlePlay} style={{padding:'6px 10px',border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa',fontSize:'16px',cursor:'pointer'}}>▶︎</button>
-          <button onClick={handlePause} style={{padding:'6px 10px',border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa',fontSize:'16px',cursor:'pointer'}}>⏸</button>
-          <button onClick={handleStop} style={{padding:'6px 10px',border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa',fontSize:'16px',cursor:'pointer'}}>◼︎</button>
+          <button onClick={handlePlay} style={{padding:'6px 10px',border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa',fontSize:'16px',cursor:'pointer',color:'#333'}}>▶︎</button>
+          <button onClick={handlePause} style={{padding:'6px 10px',border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa',fontSize:'16px',cursor:'pointer',color:'#333'}}>⏸</button>
+          <button onClick={handleStop} style={{padding:'6px 10px',border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa',fontSize:'16px',cursor:'pointer',color:'#333'}}>◼︎</button>
         </div>
       </div>
     </div>
