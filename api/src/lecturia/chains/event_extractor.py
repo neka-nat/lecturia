@@ -1,9 +1,11 @@
+import os
 import re
 from pathlib import Path
 from typing import Literal
 
 from google import genai
 from google.genai import types
+from google.genai.types import Parts
 from langchain_core.runnables import Runnable
 
 from ..models import EventList
@@ -74,8 +76,21 @@ def output_format_prompt(multiple_speakers: bool) -> str:
 
 class EventExtractor(Runnable):
     def __init__(self):
-        self.client = genai.Client()
+        self.client = genai.Client(
+            vertexai=True,  # vertex aiを使用
+            project=os.environ["GOOGLE_CLOUD_PROJECT"],
+            location=os.environ["GOOGLE_CLOUD_LOCATION"]
+        )
         self.model = "gemini-2.5-flash-preview-05-20"
+
+    def invoke(
+        self,
+        slides_html: str,
+        slide_no: int,
+        audio_file: Path | str,
+        first_speaker: Literal["left", "right"] | None = None,
+    ) -> EventList:
+        pass
 
     async def ainvoke(
         self,
@@ -84,7 +99,13 @@ class EventExtractor(Runnable):
         audio_file: Path | str,
         first_speaker: Literal["left", "right"] | None = None,
     ) -> EventList:
-        file = self.client.files.upload(file=audio_file)
+        if isinstance(audio_file, str) and (
+            audio_file.startswith("gs://") or
+            audio_file.startswith("https://storage.googleapis.com/")
+        ):
+            file = Parts.from_uri(audio_file, mime_type="audio/mpeg")
+        else:
+            file = self.client.files.upload(file=str(audio_file))
         response = await self.client.aio.models.generate_content(
             model=self.model,
             contents=[

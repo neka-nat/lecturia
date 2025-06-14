@@ -98,7 +98,7 @@ async def create_lecture(config: MovieConfig = Body(...)):
     channel = grpc.insecure_channel("gcloud-tasks-emulator:8123")
     transport = CloudTasksGrpcTransport(channel=channel)
     client = tasks_v2.CloudTasksClient(transport=transport)
-    parent = client.queue_path(os.environ["PROJECT_ID"], "asia-northeast1", "lecture-queue")
+    parent = client.queue_path(os.environ["GOOGLE_CLOUD_PROJECT"], os.environ["GOOGLE_CLOUD_LOCATION"], "lecture-queue")
     logger.info(f"Parent: {parent}")
     task = tasks_v2.Task(
         http_request=tasks_v2.HttpRequest(

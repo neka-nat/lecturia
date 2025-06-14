@@ -74,13 +74,13 @@ def create_quiz_generator_chain() -> Runnable:
         ),
     ]
     prompt = ChatPromptTemplate(messages=prompt_msgs)
-    if "GOOGLE_API_KEY" in os.environ:
-        llm = ChatGoogleGenerativeAI(
+    if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
+        llm = ChatVertexAI(
             model="gemini-2.5-flash-preview-05-20",
             max_tokens=65536,
         )
     else:
-        llm = ChatVertexAI(
+        llm = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash-preview-05-20",
             max_tokens=65536,
         )

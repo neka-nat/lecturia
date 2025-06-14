@@ -2,7 +2,6 @@ import asyncio
 from typing import Literal
 
 from langchain_core.runnables import Runnable
-from openai import OpenAI
 from pydantic import BaseModel
 from tts_clients.google.client import GoogleTTSClient
 from tts_clients.google.models import (
@@ -57,20 +56,22 @@ class Talk(BaseModel):
 
 class TTS(Runnable):
     def __init__(self):
-        self.client = OpenAI()
+        self.client = GoogleTTSClient()
 
-    async def ainvoke(self, text: str, voice_type: VoiceTypes | None = None) -> TextToAudioResponse:
+    def invoke(self, text: str, voice_type: VoiceTypes | None = None) -> TextToAudioResponse:
         voice_type = voice_type or "woman"
         req = TextToAudioRequest(
             text=text,
             voice_name=_voice_types_map[voice_type].name,
             instructions=_voice_types_map[voice_type].instructions,
         )
-        client = GoogleTTSClient()
-        response = await asyncio.to_thread(client.text_to_audio, req)
+        response = self.client.text_to_audio(req)
         return response
 
-    async def multi_speaker_ainvoke(self, talks: list[Talk]) -> TextToAudioResponse:
+    async def ainvoke(self, text: str, voice_type: VoiceTypes | None = None) -> TextToAudioResponse:
+        return await asyncio.to_thread(self.invoke, text, voice_type)
+
+    def multi_speaker_invoke(self, talks: list[Talk]) -> TextToAudioResponse:
         req = MultiSpeakerTextToAudioRequest(
             speakers=[
                 SpeakerTextToAudioRequest(
@@ -82,10 +83,11 @@ class TTS(Runnable):
             ],
             instructions="TTS the following conversation between two speakers, " + "and ".join([f"{talk.speaker_name}" for talk in talks]) + ".",
         )
-        client = GoogleTTSClient()
-        response = await asyncio.to_thread(client.multi_speaker_text_to_audio, req)
+        response = self.client.multi_speaker_text_to_audio(req)
         return response
 
+    async def multi_speaker_ainvoke(self, talks: list[Talk]) -> TextToAudioResponse:
+        return await asyncio.to_thread(self.multi_speaker_invoke, talks)
 
 
 def create_tts_chain() -> Runnable:
