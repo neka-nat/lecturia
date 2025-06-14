@@ -22,7 +22,7 @@ services:
       args:
         FIREBASE_VERSION: 13.3.0
     container_name: firestore-emulator
-    command: ["firebase", "emulators:start", "--project=${GOOGLE_CLOUD_PROJECT}", "--only", "firestore", "--import=/srv/firebase/data", "--export-on-exit"]
+    command: ["firebase", "emulators:start", "--project=${GOOGLE_CLOUD_PROJECT}", "--only", "firestore"]
     environment:
       - FIRESTORE_EMULATOR_HOST=0.0.0.0:8002
       - FIREBASE_PROJECT=${GOOGLE_CLOUD_PROJECT}
