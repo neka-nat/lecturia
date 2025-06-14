@@ -46,10 +46,9 @@ async def list_lectures() -> list[LectureInfo]:
             elif task_status.status in ["running", "pending"]:
                 lecture_status = task_status.status
         elif not has_events:
-            # If no task status and no events, skip (likely incomplete/orphaned)
-            logger.info(f"Skipping incomplete lecture without task status: {lecture_id}")
-            continue
-            
+            logger.info(f"Find incomplete lecture without task status: {lecture_id}")
+            lecture_status = "failed"
+
         json_str = download_data_from_public_bucket(f"lectures/{lecture_id}/movie_config.json")
         if json_str is None:
             lecture_infos.append(LectureInfo(
