@@ -21,6 +21,7 @@ class LectureInfo(BaseModel):
     topic: str
     detail: str | None = None
     created_at: str
+    status: str = "completed"  # "completed", "failed", "running", "pending"
 
 
 router = fastapi.APIRouter()
@@ -32,10 +33,20 @@ async def list_lectures() -> list[LectureInfo]:
     logger.info(f"Lectures: {lectures}")
     lecture_infos: list[LectureInfo] = []
     for lecture_id in lectures:
-        # Only include lectures that have completed processing
-        # Check for events.json which is created at the end of the workflow
-        if not is_exists_in_public_bucket(f"lectures/{lecture_id}/events.json"):
-            logger.info(f"Skipping incomplete lecture: {lecture_id}")
+        # Determine lecture status
+        lecture_status = "completed"
+        has_events = is_exists_in_public_bucket(f"lectures/{lecture_id}/events.json")
+        
+        # Check task status to determine if lecture failed
+        task_status = get_status(lecture_id)
+        if task_status:
+            if task_status.status == "failed":
+                lecture_status = "failed"
+            elif task_status.status in ["running", "pending"]:
+                lecture_status = task_status.status
+        elif not has_events:
+            # If no task status and no events, skip (likely incomplete/orphaned)
+            logger.info(f"Skipping incomplete lecture without task status: {lecture_id}")
             continue
             
         json_str = download_data_from_public_bucket(f"lectures/{lecture_id}/movie_config.json")
@@ -45,6 +56,7 @@ async def list_lectures() -> list[LectureInfo]:
                 topic="<無題>",
                 detail="無し",
                 created_at="",
+                status=lecture_status,
             ))
         else:
             movie_config = MovieConfig.model_validate_json(json_str)
@@ -53,6 +65,7 @@ async def list_lectures() -> list[LectureInfo]:
                 topic=movie_config.topic,
                 detail=movie_config.detail,
                 created_at="",
+                status=lecture_status,
             ))
     return lecture_infos
 
@@ -112,6 +125,42 @@ async def create_lecture(config: MovieConfig = Body(...)):
     task.dispatch_deadline = duration_pb2.Duration(seconds=900)
     client.create_task(parent=parent, task=task)
     return {"task_id": task_id}
+
+
+@router.post("/lectures/{lecture_id}/regenerate")
+async def regenerate_lecture(lecture_id: str):
+    """
+    講義の再生成を行う。失敗した講義IDで新たに生成処理を開始する。
+    """
+    logger.info(f"Regenerating lecture: {lecture_id}")
+    
+    # Get original movie config
+    json_str = download_data_from_public_bucket(f"lectures/{lecture_id}/movie_config.json")
+    if json_str is None:
+        raise fastapi.HTTPException(status_code=404, detail="Original lecture config not found")
+        
+    config = MovieConfig.model_validate_json(json_str)
+    
+    # Reset task status to pending
+    upsert_status(lecture_id, "pending")
+
+    channel = grpc.insecure_channel("gcloud-tasks-emulator:8123")
+    transport = CloudTasksGrpcTransport(channel=channel)
+    client = tasks_v2.CloudTasksClient(transport=transport)
+    parent = client.queue_path(os.environ["GOOGLE_CLOUD_PROJECT"], os.environ["GOOGLE_CLOUD_LOCATION"], "lecture-queue")
+    logger.info(f"Parent: {parent}")
+    task = tasks_v2.Task(
+        http_request=tasks_v2.HttpRequest(
+            http_method=tasks_v2.HttpMethod.POST,
+            url=f"{os.environ['WORKER_URL']}/tasks/create-lecture?lecture_id={lecture_id}",
+            headers={"Content-Type": "application/json"},
+            body=config.model_dump_json().encode(),
+        )
+    )
+    # dispatch_deadline を 15 分（900 秒）に設定
+    task.dispatch_deadline = duration_pb2.Duration(seconds=900)
+    client.create_task(parent=parent, task=task)
+    return {"task_id": lecture_id}
 
 
 @router.delete("/lectures/{lecture_id}")

@@ -5,6 +5,7 @@ export interface Lecture {
   topic: string;
   detail: string | null;
   created_at: string;
+  status: string; // "completed", "failed", "running", "pending"
 }
 
 export function useLectures() {
@@ -55,6 +56,35 @@ export function useLectures() {
     }
   };
 
+  const regenerateLecture = async (lectureId: string): Promise<string | null> => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}/api/lectures/${lectureId}/regenerate`,
+        {
+          method: 'POST',
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        // Update the lecture status to pending in local state
+        setLectures(prev => prev.map(lecture => 
+          lecture.id === lectureId 
+            ? { ...lecture, status: 'pending' }
+            : lecture
+        ));
+        return result.task_id || lectureId;
+      } else {
+        alert('講義の再生成に失敗しました。');
+        return null;
+      }
+    } catch (error) {
+      console.error('Error regenerating lecture:', error);
+      alert('講義再生成中にエラーが発生しました。');
+      return null;
+    }
+  };
+
   useEffect(() => {
     fetchLectures();
   }, []);
@@ -64,5 +94,6 @@ export function useLectures() {
     isLoading,
     fetchLectures,
     deleteLecture,
+    regenerateLecture,
   };
 }
