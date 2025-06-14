@@ -98,6 +98,12 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     (ev)=> playSignal(ev as any),
   );
 
+  /* Ensure characters start in idle state when timeline resets */
+  useEffect(() => {
+    charLeft.current?.setPose('idle');
+    charRight.current?.setPose('idle');
+  }, [pageIdx, resetTimeline]);
+
   /* audio source swap on page change */
   useEffect(()=>{
     const a = audioRef.current; if(!a) return;
@@ -137,6 +143,8 @@ export const Player: React.FC<Props> = ({ manifest }) => {
       case 'slidePrev': goTo(pageIdx-1); break;
       case 'slideStep': postToSlide('slide-step'); break;
       case 'pose':{
+        // Only allow pose changes if user has interacted (started playing)
+        if (!hasInteracted.current) break;
         const actor = ev.target==='left' ? charLeft.current : charRight.current;
         actor?.setPose((ev.name as any)||'idle');
         break;
