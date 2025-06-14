@@ -2,6 +2,17 @@
 
 ## Getting Started
 
+```bash
+cp .env.example .env
+# edit .env
+```
+
+Install dependencies:
+
+```bash
+pnpm install
+```
+
 First, run the development server:
 
 ```bash
