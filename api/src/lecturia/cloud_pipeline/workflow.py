@@ -89,22 +89,20 @@ async def _generate_audio_phase(lecture_id: str, config: MovieConfig, result_scr
         audio_files.append(audio_file)
     # Calculate audio segments with page transition duration
     audio_segments: list[AudioSegment] = []
-    audio_urls: list[str] = []
     for audio_file in audio_files:
-        audio_url = upload_data_to_public_bucket(audio_file.read_bytes(), f"lectures/{lecture_id}/{audio_file.name}", "audio/mpeg")
-        audio_urls.append(audio_url)
+        upload_data_to_public_bucket(audio_file.read_bytes(), f"lectures/{lecture_id}/{audio_file.name}", "audio/mpeg")
         audio_segments.append(
             AudioSegment.from_mp3(audio_file) + AudioSegment.silent(duration=config.page_transition_duration_sec * 1000)
         )
     slide_page_event_sec = np.cumsum([len(audio_segment) / 1000 for audio_segment in audio_segments])
-    return audio_urls, slide_page_event_sec
+    return audio_files, slide_page_event_sec
 
 
 async def _create_event_phase(
     lecture_id: str,
     result_slide: HtmlSlide,
     result_script: ScriptList,
-    audio_urls: list[str],
+    audio_files: list[Path],
     slide_page_event_sec: np.ndarray,
     speaker_left_right_map: dict[str, str],
 ) -> EventList:
@@ -115,13 +113,13 @@ async def _create_event_phase(
         events: EventList = EventList.model_validate_json(data.decode("utf-8"))
     else:
         events: EventList = EventList(events=[])
-        for slide_no, audio_url in enumerate(audio_urls):
+        for slide_no, audio_file in enumerate(audio_files):
             first_speaker = (
                 speaker_left_right_map[result_script.scripts[slide_no].script[0].name]
                 if len(speaker_left_right_map) > 1
                 else None
             )
-            events_anim: EventList = await event_extractor.ainvoke(result_slide.html, slide_no + 1, audio_url, first_speaker)
+            events_anim: EventList = await event_extractor.ainvoke(result_slide.html, slide_no + 1, audio_file, first_speaker)
             prev_sec = slide_page_event_sec[slide_no - 1] if slide_no > 0 else 0
             events.events.extend(
                 [
@@ -168,11 +166,11 @@ async def create_lecture(lecture_id: str, config: MovieConfig = Body(...)):
         # Phase 3: Generate audio (75% progress)
         upsert_status(lecture_id, "running", progress_percentage=50, current_phase="音声生成中")
         temp_dir = tempfile.mkdtemp()
-        audio_urls, slide_page_event_sec = await _generate_audio_phase(lecture_id, config, result_script, temp_dir)
+        audio_files, slide_page_event_sec = await _generate_audio_phase(lecture_id, config, result_script, temp_dir)
         
         # Phase 4: Create events (90% progress)
         upsert_status(lecture_id, "running", progress_percentage=75, current_phase="イベント作成中")
-        await _create_event_phase(lecture_id, result_slide, result_script, audio_urls, slide_page_event_sec, speaker_left_right_map)
+        await _create_event_phase(lecture_id, result_slide, result_script, audio_files, slide_page_event_sec, speaker_left_right_map)
 
         # Cleanup and completion (100% progress)
         upsert_status(lecture_id, "running", progress_percentage=95, current_phase="最終処理中")

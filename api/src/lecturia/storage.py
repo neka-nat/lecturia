@@ -17,7 +17,10 @@ def upload_data(
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(path)
     blob.upload_from_string(data, content_type=mime_type)
-    return f"https://storage.googleapis.com/{bucket_name}/{path}"
+    if "STORAGE_EMULATOR_HOST" in os.environ:
+        return f"http://{os.environ['STORAGE_EMULATOR_HOST']}/storage/v1/b/{bucket_name}/o/{path}?alt=media"
+    else:
+        return f"https://storage.googleapis.com/{bucket_name}/{path}"
 
 
 def upload_data_to_public_bucket(

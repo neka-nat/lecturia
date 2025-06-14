@@ -5,7 +5,7 @@ from typing import Literal
 
 from google import genai
 from google.genai import types
-from google.genai.types import Parts
+from google.genai.types import Part
 from langchain_core.runnables import Runnable
 
 from ..models import EventList
@@ -99,11 +99,8 @@ class EventExtractor(Runnable):
         audio_file: Path | str,
         first_speaker: Literal["left", "right"] | None = None,
     ) -> EventList:
-        if isinstance(audio_file, str) and (
-            audio_file.startswith("gs://") or
-            audio_file.startswith("https://storage.googleapis.com/")
-        ):
-            file = Parts.from_uri(audio_file, mime_type="audio/mpeg")
+        if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
+            file = Part.from_bytes(data=audio_file.read_bytes(), mime_type="audio/mpeg")
         else:
             file = self.client.files.upload(file=str(audio_file))
         response = await self.client.aio.models.generate_content(

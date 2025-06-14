@@ -1,6 +1,7 @@
 import base64
 import os
 import uuid
+from typing import Literal
 
 import fastapi
 import grpc
@@ -21,7 +22,7 @@ class LectureInfo(BaseModel):
     topic: str
     detail: str | None = None
     created_at: str
-    status: str = "completed"  # "completed", "failed", "running", "pending"
+    status: Literal["completed", "failed", "running", "pending"] = "completed"
 
 
 router = fastapi.APIRouter()
@@ -36,7 +37,7 @@ async def list_lectures() -> list[LectureInfo]:
         # Determine lecture status
         lecture_status = "completed"
         has_events = is_exists_in_public_bucket(f"lectures/{lecture_id}/events.json")
-        
+
         # Check task status to determine if lecture failed
         task_status = get_status(lecture_id)
         if task_status:
@@ -100,50 +101,7 @@ async def get_task_status(task_id: str) -> TaskStatus:
     return task_status
 
 
-@router.post("/create-lecture")
-async def create_lecture(config: MovieConfig = Body(...)):
-    logger.info(f"Creating lecture: {config}")
-    task_id = str(uuid.uuid4())
-    
-    # Initialize task status in Firestore
-    upsert_status(task_id, "pending")
-
-    channel = grpc.insecure_channel("gcloud-tasks-emulator:8123")
-    transport = CloudTasksGrpcTransport(channel=channel)
-    client = tasks_v2.CloudTasksClient(transport=transport)
-    parent = client.queue_path(os.environ["GOOGLE_CLOUD_PROJECT"], os.environ["GOOGLE_CLOUD_LOCATION"], "lecture-queue")
-    logger.info(f"Parent: {parent}")
-    task = tasks_v2.Task(
-        http_request=tasks_v2.HttpRequest(
-            http_method=tasks_v2.HttpMethod.POST,
-            url=f"{os.environ['WORKER_URL']}/tasks/create-lecture?lecture_id={task_id}",
-            headers={"Content-Type": "application/json"},
-            body=config.model_dump_json().encode(),
-        )
-    )
-    # dispatch_deadline を 15 分（900 秒）に設定
-    task.dispatch_deadline = duration_pb2.Duration(seconds=900)
-    client.create_task(parent=parent, task=task)
-    return {"task_id": task_id}
-
-
-@router.post("/lectures/{lecture_id}/regenerate")
-async def regenerate_lecture(lecture_id: str):
-    """
-    講義の再生成を行う。失敗した講義IDで新たに生成処理を開始する。
-    """
-    logger.info(f"Regenerating lecture: {lecture_id}")
-    
-    # Get original movie config
-    json_str = download_data_from_public_bucket(f"lectures/{lecture_id}/movie_config.json")
-    if json_str is None:
-        raise fastapi.HTTPException(status_code=404, detail="Original lecture config not found")
-        
-    config = MovieConfig.model_validate_json(json_str)
-    
-    # Reset task status to pending
-    upsert_status(lecture_id, "pending")
-
+async def _create_lecture_task(lecture_id: str, config: MovieConfig) -> dict[str, str]:
     channel = grpc.insecure_channel("gcloud-tasks-emulator:8123")
     transport = CloudTasksGrpcTransport(channel=channel)
     client = tasks_v2.CloudTasksClient(transport=transport)
@@ -161,6 +119,33 @@ async def regenerate_lecture(lecture_id: str):
     task.dispatch_deadline = duration_pb2.Duration(seconds=900)
     client.create_task(parent=parent, task=task)
     return {"task_id": lecture_id}
+
+
+@router.post("/create-lecture")
+async def create_lecture(config: MovieConfig = Body(...)):
+    logger.info(f"Creating lecture: {config}")
+    lecture_id = str(uuid.uuid4())
+    # Initialize task status in Firestore
+    upsert_status(lecture_id, "pending")
+    return await _create_lecture_task(lecture_id, config)
+
+
+@router.post("/lectures/{lecture_id}/regenerate")
+async def regenerate_lecture(lecture_id: str):
+    """
+    講義の再生成を行う。失敗した講義IDで新たに生成処理を開始する。
+    """
+    logger.info(f"Regenerating lecture: {lecture_id}")
+
+    # Get original movie config
+    json_str = download_data_from_public_bucket(f"lectures/{lecture_id}/movie_config.json")
+    if json_str is None:
+        raise fastapi.HTTPException(status_code=404, detail="Original lecture config not found")
+    config = MovieConfig.model_validate_json(json_str)
+
+    # Reset task status to pending
+    upsert_status(lecture_id, "pending")
+    return await _create_lecture_task(lecture_id, config)
 
 
 @router.delete("/lectures/{lecture_id}")
