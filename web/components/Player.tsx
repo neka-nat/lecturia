@@ -82,9 +82,13 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     (async()=>{
       if (manifest.sprites.right && charRight.current){
         await charRight.current.setSprite(manifest.sprites.right);
+        // Initialize to idle pose to prevent early event states from showing
+        charRight.current.setPose('idle');
       }
       if (manifest.sprites.left && charLeft.current){
         await charLeft.current.setSprite(manifest.sprites.left);
+        // Initialize to idle pose to prevent early event states from showing
+        charLeft.current.setPose('idle');
       }
     })();
   },[manifest.sprites]);
@@ -105,6 +109,9 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     a.src = manifest.audioUrls[pageIdx] ?? '';
     a.currentTime = 0;
     resetTimeline();
+    // Reset characters to idle when changing pages/resetting timeline
+    charLeft.current?.setPose('idle');
+    charRight.current?.setPose('idle');
     if (hasInteracted.current){ a.play().catch(()=>{}); }
   },[pageIdx, resetTimeline]);
 

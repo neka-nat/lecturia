@@ -35,6 +35,16 @@ export const useTimeline = (
 
     const onTimeUpdate = () => flush(audio.currentTime);
 
+    const onPlay = () => {
+      // Only start timeline processing when audio actually starts playing
+      rafId.current = requestAnimationFrame(step);
+    };
+
+    const onPause = () => {
+      // Stop timeline processing when audio is paused
+      cancelAnimationFrame(rafId.current);
+    };
+
     const flush = (t: number) => {
       while (idx.current < events.length && t >= events[idx.current].time_sec) {
         playSignal(events[idx.current]);
@@ -43,10 +53,15 @@ export const useTimeline = (
     };
 
     audio.addEventListener('timeupdate', onTimeUpdate);
-    rafId.current = requestAnimationFrame(step);
+    audio.addEventListener('play', onPlay);
+    audio.addEventListener('pause', onPause);
+    
+    // Don't start timeline processing immediately - wait for play event
 
     return () => {
       audio.removeEventListener('timeupdate', onTimeUpdate);
+      audio.removeEventListener('play', onPlay);
+      audio.removeEventListener('pause', onPause);
       cancelAnimationFrame(rafId.current);
     };
   }, [audio, events, playSignal]);
