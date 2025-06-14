@@ -98,11 +98,11 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     (ev)=> playSignal(ev as any),
   );
 
-  /* Ensure characters start in idle state when timeline resets */
+  /* Ensure characters start in idle state when page changes */
   useEffect(() => {
     charLeft.current?.setPose('idle');
     charRight.current?.setPose('idle');
-  }, [pageIdx, resetTimeline]);
+  }, [pageIdx]);
 
   /* audio source swap on page change */
   useEffect(()=>{
