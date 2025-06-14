@@ -79,7 +79,7 @@ class EventExtractor(Runnable):
         self.client = genai.Client(
             vertexai=True,  # vertex aiを使用
             project=os.environ["GOOGLE_CLOUD_PROJECT"],
-            location=os.environ["GOOGLE_CLOUD_LOCATION"]
+            location="global"
         )
         self.model = "gemini-2.5-flash-preview-05-20"
 

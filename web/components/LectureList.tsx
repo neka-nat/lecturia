@@ -52,7 +52,7 @@ export const LectureList = forwardRef<LectureListRef, LectureListProps>(
             </p>
           </div>
         ) : (
-          <div className="max-h-96 overflow-y-auto space-y-4 pr-2">
+          <div className="max-h-[calc(100vh-200px)] overflow-y-auto space-y-4 pr-2">
             {lectures.map((lecture, index) => (
               <LectureCard
                 key={lecture.id}
