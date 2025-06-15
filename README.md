@@ -4,7 +4,15 @@
   <strong>"Your Learning, Your Way."</strong>
 </p>
 
-## 概要
+## Overview
 
-Lecturiaは、AIを活用した講義生成ツールです。
-学びたいテーマとその詳細内容を与えることで、講義を生成します。
+Lecturia is a lecture generation tool that uses AI to generate lectures.
+You can generate lectures by giving a topic and detailed content.
+
+## Features
+
+* Generate lecture slides by giving a topic and detailed content.
+* Generate lecture scripts according to the slides.
+* Generate audios according to the scripts.
+* Animate characters talking on the slides.
+* On the lecture, there are quizzes to check the understanding of the audience.
