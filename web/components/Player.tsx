@@ -72,7 +72,10 @@ export const Player: React.FC<Props> = ({ manifest }) => {
         buf.push({ ...ev, time_sec: ev.time_sec - base }); // ⏱️ relative
       }
     });
-    pages.push(buf);                    // last page
+    // Only push the last page if it has events
+    if (buf.length > 0) {
+      pages.push(buf);
+    }
     return pages;
   },[manifest.events]);
 
@@ -185,8 +188,9 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     const audio = audioRef.current;
     if (!audio) return;
     
-    // If audio has ended, reset timeline for replay
+    // If audio has ended, reset for replay
     if (audio.ended) {
+      audio.currentTime = 0; // Reset audio position first
       resetTimeline();
       // Also reset characters to idle state
       charLeft.current?.setPose('idle');
