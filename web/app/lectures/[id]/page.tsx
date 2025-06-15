@@ -19,11 +19,22 @@ export default async function LecturePage({
     `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}${manifest.eventsUrl}`,
     { cache: 'no-store' },
   );
-  const quizResp = await fetch(
-    `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}${manifest.quizUrl}`,
-    { cache: 'no-store' },
-  );
-  manifest.quizSections = (await quizResp.json()).quiz_sections || [];
+  let quizSections: any[] = [];
+  try {
+    const quizResp = await fetch(
+      `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}${manifest.quizUrl}`,
+      { cache: 'no-store' },
+    );
+    if (quizResp.ok) {
+      const { quiz_sections } = await quizResp.json();
+      quizSections = quiz_sections ?? [];
+    } else if (quizResp.status !== 404) {
+      console.warn('quiz fetch error', quizResp.status);
+    }
+  } catch (e) {
+    console.warn('quiz fetch failed (ignored)', e);
+  }
+  manifest.quizSections = quizSections;   // 404 時は []
   const { events } = await eventsResp.json();
   manifest.events = events;
   manifest.slideUrl = `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}${manifest.slideUrl}`;
