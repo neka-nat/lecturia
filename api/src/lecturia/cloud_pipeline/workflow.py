@@ -63,14 +63,14 @@ def _create_script_phase(lecture_id: str, config: MovieConfig, result_slide: Htm
     return result_script
 
 
-def _create_quiz_phase(lecture_id: str, config: MovieConfig, result_slide: HtmlSlide) -> QuizSectionList:
+async def _create_quiz_phase(lecture_id: str, config: MovieConfig, result_slide: HtmlSlide) -> QuizSectionList:
     quiz_generator = create_quiz_generator_chain(config.speakers)
     if is_exists_in_public_bucket(f"lectures/{lecture_id}/result_quiz.json"):
         logger.info(f"Loading result_quiz.json from {f'lectures/{lecture_id}/result_quiz.json'}")
         data = download_data_from_public_bucket(f"lectures/{lecture_id}/result_quiz.json")
         result_quiz: QuizSectionList = QuizSectionList.model_validate_json(data.decode("utf-8"))
     else:
-        result_quiz: QuizSectionList = quiz_generator.invoke(
+        result_quiz: QuizSectionList = await quiz_generator.ainvoke(
             {"slides": result_slide.html},
             config={
                 "callbacks": [ConsoleCallbackHandler()],
@@ -194,7 +194,7 @@ async def create_lecture(lecture_id: str, config: MovieConfig = Body(...)):
 
         # Phase 3: Create quiz (60% progress)
         upsert_status(lecture_id, "running", progress_percentage=60, current_phase="クイズ作成中")
-        result_quiz = _create_quiz_phase(lecture_id, config, result_slide)
+        result_quiz_task = _create_quiz_phase(lecture_id, config, result_slide)
 
         # Phase 4: Generate audio (75% progress)
         upsert_status(lecture_id, "running", progress_percentage=50, current_phase="音声生成中")
@@ -202,6 +202,7 @@ async def create_lecture(lecture_id: str, config: MovieConfig = Body(...)):
         audio_files, slide_page_event_sec = await _generate_audio_phase(lecture_id, config, result_script, temp_dir)
         
         # Phase 5: Create events (90% progress)
+        result_quiz = await result_quiz_task
         upsert_status(lecture_id, "running", progress_percentage=75, current_phase="イベント作成中")
         await _create_event_phase(
             lecture_id,
