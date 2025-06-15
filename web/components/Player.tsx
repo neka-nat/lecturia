@@ -218,14 +218,13 @@ export const Player: React.FC<Props> = ({ manifest }) => {
 
     if (correct) {
       // ▶ 正解なら次ページへ
-      postToSlide('slide-next');
       goTo(pageIdx + 1);
       // audio は pageIdx が変わったあと useEffect で自動再生
     } else {
       // ▶ 不正解なら同じページを続行
       audioRef.current?.play().catch(() => {});
     }
-  }, [pageIdx, postToSlide]);
+  }, [pageIdx]);
 
   /* -------------------------------------------------------------
      Render
