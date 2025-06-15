@@ -189,7 +189,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     if (!audio) return;
     
     // If audio has ended, reset for replay
-    if (audio.ended) {
+    if (audio.ended || audio.currentTime === 0) {
       audio.currentTime = 0; // Reset audio position first
       resetTimeline();
       // Also reset characters to idle state
@@ -200,7 +200,20 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     audio.play();
   };
   const handlePause = ()=> audioRef.current?.pause();
-  const handleStop = ()=>{ audioRef.current?.pause(); if(audioRef.current) audioRef.current.currentTime = 0; hasInteracted.current=false; goTo(0); };
+  const handleStop = ()=>{
+    audioRef.current?.pause();
+    if(audioRef.current) {
+      audioRef.current.currentTime = 0;
+      hasInteracted.current=false;
+      goTo(0);
+      resetTimeline();
+      charLeft.current?.setPose('idle');
+      charRight.current?.setPose('idle');
+      if (pageIdx === eventsPages.length - 1) {
+        goTo(0);
+      }
+    }
+  };
 
   /* slide navigation handlers */
   const handlePrevSlide = ()=> goTo(pageIdx - 1);
