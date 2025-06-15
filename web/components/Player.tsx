@@ -10,6 +10,7 @@ import React, {
 } from 'react';
 import { Event, useTimeline } from '@/hooks/useTimeline';
 import { Character } from '@/utils/character';
+import { QuizModal } from '@/components/QuizModal';
 
 export type Manifest = {
   slideUrl: string;
@@ -18,6 +19,15 @@ export type Manifest = {
   sprites: Record<'left'|'right', string>;
   slideWidth: number;
   slideHeight: number;
+  quizSections: {
+    name: string;
+    slide_no: number;
+    quizzes: {
+      question: string;
+      choices: string[];
+      answer_index: number;
+    }[];
+  }[];
 };
 
 interface Props { manifest: Manifest; }
@@ -35,6 +45,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
   const [pageIdx, setPageIdx]   = useState(0);   // current page (0‑based)
   const [slideReady, setReady]  = useState(false);
   const [jumpToSlide, setJumpToSlide] = useState(''); // input for slide navigation
+  const [quizOpen, setQuizOpen] = useState<Manifest['quizSections'][number] | null>(null);
   const hasInteracted           = useRef(false); // ▶︎ pressed once?
 
   /* -------------------------------------------------------------
@@ -153,6 +164,14 @@ export const Player: React.FC<Props> = ({ manifest }) => {
         if(ev.src) actor?.setSprite(ev.src);
         break;
       }
+      case 'quiz': {       
+        audioRef.current?.pause();  // 講義音声ストップ
+        // キャラをポイントポーズにしておく
+        charRight.current?.setPose('idle');
+        const section = manifest.quizSections.find(s => s.name === ev.name);
+        if (section) setQuizOpen(section);
+        break;
+      }
       default: break;
     }
   },[pageIdx, postToSlide]);
@@ -172,6 +191,12 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     if(isNaN(slideNum) || slideNum < 1 || slideNum > eventsPages.length) return;
     goTo(slideNum - 1); // convert 1-based to 0-based
     setJumpToSlide('');
+  };
+  const handleQuizClose = () => {
+    setQuizOpen(null);
+    charLeft.current?.setPose('idle');
+    charRight.current?.setPose('idle');
+    audioRef.current?.play().catch(()=>{});
   };
 
   /* -------------------------------------------------------------
@@ -235,6 +260,9 @@ export const Player: React.FC<Props> = ({ manifest }) => {
           <button onClick={handleStop} style={{padding:'6px 10px',border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa',fontSize:'16px',cursor:'pointer',color:'#333'}}>◼︎</button>
         </div>
       </div>
+      {quizOpen && (
+        <QuizModal section={quizOpen} onClose={handleQuizClose} />
+      )}
     </div>
   );
 };

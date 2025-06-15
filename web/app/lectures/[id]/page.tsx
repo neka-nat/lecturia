@@ -19,6 +19,11 @@ export default async function LecturePage({
     `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}${manifest.eventsUrl}`,
     { cache: 'no-store' },
   );
+  const quizResp = await fetch(
+    `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}${manifest.quizUrl}`,
+    { cache: 'no-store' },
+  );
+  manifest.quizSections = (await quizResp.json()).quiz_sections || [];
   const { events } = await eventsResp.json();
   manifest.events = events;
   manifest.slideUrl = `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}${manifest.slideUrl}`;
