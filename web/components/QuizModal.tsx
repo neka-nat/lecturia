@@ -7,7 +7,7 @@ export type QuizSection = { name: string; slide_no: number; quizzes: Quiz[] };
 
 interface Props {
   section: QuizSection;
-  onClose: () => void;
+  onClose: (correct: boolean) => void;
 }
 
 export const QuizModal: React.FC<Props> = ({ section, onClose }) => {
@@ -17,8 +17,9 @@ export const QuizModal: React.FC<Props> = ({ section, onClose }) => {
 
   const handleSelect = (idx: number) => {
     if (answered) return;
+    const correct = idx === quiz.answer_index;
     setSelected(idx);
-    setTimeout(onClose, 1200);          // 1.2 秒後に自動クローズ
+    setTimeout(() => onClose(correct), 800);   // 少し待ってから閉じる
   };
 
   return (
@@ -37,10 +38,12 @@ export const QuizModal: React.FC<Props> = ({ section, onClose }) => {
                 key={i}
                 onClick={() => handleSelect(i)}
                 className={`
-                  px-4 py-2 border rounded-lg cursor-pointer
-                  ${answered ? 'pointer-events-none' : 'hover:bg-slate-50'}
-                  ${isCorrect ? 'border-emerald-500 bg-emerald-50' : ''}
-                  ${isWrong   ? 'border-rose-500    bg-rose-50'    : ''}
+                    px-4 py-2 border rounded-lg cursor-pointer
+                    ${answered ? 'pointer-events-none' : 'hover:bg-slate-200'}
+                    ${isCorrect ? 'border-emerald-500 bg-emerald-50' : ''}
+                    ${isWrong   ? 'border-rose-500    bg-rose-50'    : ''}
+                    ${!answered && !isCorrect && !isWrong ? 'bg-slate-100' : ''}
+                    text-slate-800
                 `}
               >
                 {c}

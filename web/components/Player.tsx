@@ -192,12 +192,21 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     goTo(slideNum - 1); // convert 1-based to 0-based
     setJumpToSlide('');
   };
-  const handleQuizClose = () => {
+  const handleQuizClose = useCallback((correct: boolean) => {
     setQuizOpen(null);
     charLeft.current?.setPose('idle');
     charRight.current?.setPose('idle');
-    audioRef.current?.play().catch(()=>{});
-  };
+
+    if (correct) {
+      // ▶ 正解なら次ページへ
+      postToSlide('slide-next');
+      goTo(pageIdx + 1);
+      // audio は pageIdx が変わったあと useEffect で自動再生
+    } else {
+      // ▶ 不正解なら同じページを続行
+      audioRef.current?.play().catch(() => {});
+    }
+  }, [pageIdx, postToSlide]);
 
   /* -------------------------------------------------------------
      Render
