@@ -179,7 +179,22 @@ export const Player: React.FC<Props> = ({ manifest }) => {
   /* -------------------------------------------------------------
      Controls
   ------------------------------------------------------------- */
-  const handlePlay = ()=>{ if(!slideReady) return; hasInteracted.current = true; audioRef.current?.play(); };
+  const handlePlay = ()=>{
+    if(!slideReady) return; 
+    hasInteracted.current = true; 
+    const audio = audioRef.current;
+    if (!audio) return;
+    
+    // If audio has ended, reset timeline for replay
+    if (audio.ended) {
+      resetTimeline();
+      // Also reset characters to idle state
+      charLeft.current?.setPose('idle');
+      charRight.current?.setPose('idle');
+    }
+    
+    audio.play();
+  };
   const handlePause = ()=> audioRef.current?.pause();
   const handleStop = ()=>{ audioRef.current?.pause(); if(audioRef.current) audioRef.current.currentTime = 0; hasInteracted.current=false; goTo(0); };
 
