@@ -9,13 +9,14 @@ from langchain_core.tracers.stdout import ConsoleCallbackHandler
 from loguru import logger
 from pydub import AudioSegment
 
+from ..chains.quiz_generator import create_quiz_generator_chain
 from ..chains.slide_maker import HtmlSlide, create_slide_maker_chain
 from ..chains.slide_to_script import ScriptList, create_slide_to_script_chain
 from ..chains.tts import Talk, create_tts_chain
 from ..chains.event_extractor import create_event_extractor_chain
 from ..slide_editor import edit_slide
 from ..media import remove_long_silence
-from ..models import MovieConfig, EventList, Event
+from ..models import MovieConfig, EventList, Event, QuizSectionList
 from ..storage import is_exists_in_public_bucket, download_data_from_public_bucket, upload_data_to_public_bucket
 from ..firestore import upsert_status
 
@@ -62,6 +63,23 @@ def _create_script_phase(lecture_id: str, config: MovieConfig, result_slide: Htm
     return result_script
 
 
+def _create_quiz_phase(lecture_id: str, config: MovieConfig, result_slide: HtmlSlide) -> QuizSectionList:
+    quiz_generator = create_quiz_generator_chain(config.speakers)
+    if is_exists_in_public_bucket(f"lectures/{lecture_id}/result_quiz.json"):
+        logger.info(f"Loading result_quiz.json from {f'lectures/{lecture_id}/result_quiz.json'}")
+        data = download_data_from_public_bucket(f"lectures/{lecture_id}/result_quiz.json")
+        result_quiz: QuizSectionList = QuizSectionList.model_validate_json(data.decode("utf-8"))
+    else:
+        result_quiz: QuizSectionList = quiz_generator.invoke(
+            {"slides": result_slide.html},
+            config={
+                "callbacks": [ConsoleCallbackHandler()],
+            },
+        )
+        upload_data_to_public_bucket(result_quiz.model_dump_json(), f"lectures/{lecture_id}/result_quiz.json", "application/json")
+    return result_quiz
+
+
 async def _generate_audio_phase(lecture_id: str, config: MovieConfig, result_script: ScriptList, temp_dir: str) -> tuple[list[Path], np.ndarray]:
     tts = create_tts_chain()
     audio_files: list[Path] = []
@@ -102,10 +120,13 @@ async def _create_event_phase(
     lecture_id: str,
     result_slide: HtmlSlide,
     result_script: ScriptList,
+    result_quiz: QuizSectionList,
     audio_files: list[Path],
     slide_page_event_sec: np.ndarray,
     speaker_left_right_map: dict[str, str],
 ) -> EventList:
+    slide_no_to_quiz_section_map = {quiz_section.slide_no: quiz_section for quiz_section in result_quiz.quiz_sections}
+
     event_extractor = create_event_extractor_chain()
     if is_exists_in_public_bucket(f"lectures/{lecture_id}/events.json"):
         logger.info(f"Loading events.json from {f'lectures/{lecture_id}/events.json'}")
@@ -128,6 +149,14 @@ async def _create_event_phase(
                 ]
             )
             events.events.append(Event(type="slideNext", time_sec=slide_page_event_sec[slide_no]))
+            if slide_no in slide_no_to_quiz_section_map:
+                events.events.append(
+                    Event(
+                        type="quiz",
+                        time_sec=slide_page_event_sec[slide_no],
+                        name=slide_no_to_quiz_section_map[slide_no].name,
+                    )
+                )
         logger.info(f"Events: {events}")
         upload_data_to_public_bucket(events.model_dump_json(), f"lectures/{lecture_id}/events.json", "application/json")
     return events
@@ -163,14 +192,26 @@ async def create_lecture(lecture_id: str, config: MovieConfig = Body(...)):
         upsert_status(lecture_id, "running", progress_percentage=25, current_phase="スクリプト作成中")
         result_script = _create_script_phase(lecture_id, config, result_slide)
 
-        # Phase 3: Generate audio (75% progress)
+        # Phase 3: Create quiz (60% progress)
+        upsert_status(lecture_id, "running", progress_percentage=60, current_phase="クイズ作成中")
+        result_quiz = _create_quiz_phase(lecture_id, config, result_slide)
+
+        # Phase 4: Generate audio (75% progress)
         upsert_status(lecture_id, "running", progress_percentage=50, current_phase="音声生成中")
         temp_dir = tempfile.mkdtemp()
         audio_files, slide_page_event_sec = await _generate_audio_phase(lecture_id, config, result_script, temp_dir)
         
-        # Phase 4: Create events (90% progress)
+        # Phase 5: Create events (90% progress)
         upsert_status(lecture_id, "running", progress_percentage=75, current_phase="イベント作成中")
-        await _create_event_phase(lecture_id, result_slide, result_script, audio_files, slide_page_event_sec, speaker_left_right_map)
+        await _create_event_phase(
+            lecture_id,
+            result_slide,
+            result_script,
+            result_quiz,
+            audio_files,
+            slide_page_event_sec,
+            speaker_left_right_map,
+        )
 
         # Cleanup and completion (100% progress)
         upsert_status(lecture_id, "running", progress_percentage=95, current_phase="最終処理中")
