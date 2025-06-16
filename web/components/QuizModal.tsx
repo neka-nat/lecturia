@@ -11,15 +11,27 @@ interface Props {
 }
 
 export const QuizModal: React.FC<Props> = ({ section, onClose }) => {
-  const quiz = section.quizzes[0];      // 最小構成: セクション毎に 1 問だけ
+  const [curIdx, setCurIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
+  const [anyWrong, setAnyWrong] = useState(false);
+  const quiz = section.quizzes[curIdx];
   const answered = selected !== null;
 
   const handleSelect = (idx: number) => {
     if (answered) return;
     const correct = idx === quiz.answer_index;
     setSelected(idx);
-    setTimeout(() => onClose(correct), 800);   // 少し待ってから閉じる
+    if (!correct) setAnyWrong(true);
+
+    const isLast = curIdx === section.quizzes.length - 1;
+    setTimeout(() => {
+      if (isLast) {
+        onClose(!anyWrong && correct);
+      } else {
+        setCurIdx((i) => i + 1);
+        setSelected(null);
+      }
+    }, 800);
   };
 
   return (
