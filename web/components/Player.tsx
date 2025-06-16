@@ -142,8 +142,13 @@ export const Player: React.FC<Props> = ({ manifest }) => {
   ------------------------------------------------------------- */
   const goTo = (idx:number)=>{
     idx = Math.max(0, Math.min(idx, eventsPages.length-1));
-    if(idx===pageIdx) return;
-    postToSlide(idx>pageIdx ? 'slide-next' : 'slide-prev');
+    const delta = idx - pageIdx;
+    if (delta === 0) return;
+
+    const msg = delta > 0 ? 'slide-next' : 'slide-prev';
+    for (let i = 0; i < Math.abs(delta); i++) {
+      postToSlide(msg);
+    }
     setPageIdx(idx);
     charLeft.current?.setPose('idle');
     charRight.current?.setPose('idle');
@@ -188,15 +193,18 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     const audio = audioRef.current;
     if (!audio) return;
     
-    // If audio has ended, reset for replay
-    if (audio.ended || audio.currentTime === 0) {
-      audio.currentTime = 0; // Reset audio position first
+    // 既に最後まで再生済みの場合はページも音声も先頭へ
+    if (audio.ended) {
+      goTo(0);          // goTo 内で audio.src が 0 ページ用に切り替わり
+      return;           // useEffect の再生処理に任せる
+    }
+
+    // 通常の再生／再開
+    if (audio.currentTime === 0) {
       resetTimeline();
-      // Also reset characters to idle state
       charLeft.current?.setPose('idle');
       charRight.current?.setPose('idle');
     }
-    
     audio.play();
   };
   const handlePause = ()=> audioRef.current?.pause();
@@ -209,9 +217,6 @@ export const Player: React.FC<Props> = ({ manifest }) => {
       resetTimeline();
       charLeft.current?.setPose('idle');
       charRight.current?.setPose('idle');
-      if (pageIdx === eventsPages.length - 1) {
-        goTo(0);
-      }
     }
   };
 
