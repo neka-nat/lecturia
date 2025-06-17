@@ -16,3 +16,7 @@ You can generate lectures by giving a topic and detailed content.
 * Generate audios according to the scripts.
 * Animate characters talking on the slides.
 * On the lecture, there are quizzes to check the understanding of the audience.
+
+## Architecture
+
+![Lecturia Architecture](assets/lecturia_arch.png)
