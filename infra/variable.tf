@@ -1,10 +1,15 @@
-variable "app_container_image" {
-  description = "Artifact Registry に push 済みのアプリ用コンテナ (gcr.io/…)"
+variable "gcp_project_id" {
+  description = "GCP プロジェクト ID"
   type        = string
 }
 
-variable "worker_container_image" {
-  description = "Artifact Registry に push 済みのワーカー用コンテナ (gcr.io/…)"
+variable "primary_region" {
+  description = "プライマリーリージョン"
+  type        = string
+}
+
+variable "container_image" {
+  description = "Artifact Registry に push 済みのアプリ用コンテナ (gcr.io/…)"
   type        = string
 }
 

@@ -1,3 +1,7 @@
+module "required-api" {
+  source = "./modules/required-api"
+}
+
 module "service_accounts" {
   source          = "./modules/service-accounts"
   gcp_project_id  = var.gcp_project_id

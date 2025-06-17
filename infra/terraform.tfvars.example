@@ -1,0 +1,3 @@
+gcp_project_id    = ""
+primary_region    = ""
+container_image   = ""
