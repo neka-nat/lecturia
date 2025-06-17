@@ -18,6 +18,12 @@ variable "public_bucket_name" {
   type        = string
 }
 
+variable "lecture_queue_name" {
+  description = "Cloud Tasks キュー名"
+  type        = string
+  default     = "lecture-queue"
+}
+
 variable "secrets_file" {
   description = "Secret Manager に保存するシークレットのファイルパス"
   type        = string
