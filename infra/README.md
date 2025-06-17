@@ -9,7 +9,11 @@ gcloud config set project $PROJECT_ID
 gcloud auth application-default login
 ```
 
-
+```bash
+terraform init
+terraform plan
+terraform apply
+```
 
 When you finish working on the project, you can revoke the application default credentials by running the following command:
 

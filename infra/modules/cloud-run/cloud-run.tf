@@ -1,20 +1,21 @@
+variable "gcp_project_id" {}
 variable "name" {}
-variable "location" {}
-variable "image" {}
+variable "primary_region" {}
+variable "repository_url" {}
 variable "service_account_email" {}
 variable "env"        { type = map(string) }
-variable "secret_env" { type = map(string) }    # name => secret version resource id
+variable "secret_env" { type = map(string) }
 variable "public_access" { type = bool }
 variable "required_apis" {}
 
 resource "google_cloud_run_v2_service" "service" {
   name     = var.name
-  location = var.location
+  location = var.primary_region
   ingress  = "INGRESS_TRAFFIC_ALL"
   template {
     service_account = var.service_account_email
     containers {
-      image = var.image
+      image = "${var.repository_url}/${var.name}:latest"
 
       dynamic "env" {
         for_each = var.env
@@ -24,22 +25,22 @@ resource "google_cloud_run_v2_service" "service" {
         }
       }
 
-      dynamic "secret_env" {
+      dynamic "env" {
         for_each = var.secret_env
         content {
-          name      = secret_env.key
+          name      = env.key
           value_source {
             secret_key_ref {
-              secret  = secret_env.key
-              version = secret_env.value
+              secret  = split("/versions/", env.value)[0]
+              version = split("/versions/", env.value)[1]
             }
           }
         }
       }
       resources {
         limits = {
-          memory = "1Gi"
-          cpu    = "1"
+          memory = "2Gi"
+          cpu    = "1000m"
         }
       }
     }
@@ -53,11 +54,10 @@ resource "google_cloud_run_v2_service" "service" {
   depends_on = [var.required_apis]
 }
 
-# Public ルーティング（必要なら off に）
 resource "google_cloud_run_service_iam_member" "public" {
   count    = var.public_access ? 1 : 0
-  location = var.location
-  project  = var.service_account_email |> split("@")[1] |> join("")
+  project  = var.gcp_project_id
+  location = var.primary_region
   service  = google_cloud_run_v2_service.service.name
   role     = "roles/run.invoker"
   member   = "allUsers"

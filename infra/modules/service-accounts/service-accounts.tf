@@ -22,11 +22,13 @@ locals {
     "roles/secretmanager.secretAccessor",
     "roles/storage.objectViewer",
     "roles/cloudtasks.enqueuer",
+    "roles/artifactregistry.reader",
   ]
   roles_worker = [
     "roles/datastore.user",
     "roles/secretmanager.secretAccessor",
     "roles/storage.objectAdmin",
+    "roles/artifactregistry.reader",
   ]
 }
 
