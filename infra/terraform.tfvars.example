@@ -1,3 +1,5 @@
-gcp_project_id    = ""
-primary_region    = ""
-container_image   = ""
+gcp_project_id     = ""
+primary_region     = ""
+container_image    = ""
+public_bucket_name = ""
+secrets_file       = ""
