@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 export type Event = {
-  type: 'slideNext' | 'slidePrev' | 'slideStep' | 'pose' | 'quiz';
+  type: 'slideNext' | 'slidePrev' | 'slideStep' | 'pose' | `sprite` | 'quiz';
   time_sec: number;
   name?: string;
   target?: 'left' | 'right';

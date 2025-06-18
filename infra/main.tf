@@ -59,6 +59,8 @@ module "cloud_run_app" {
   primary_region         = var.primary_region
   repository_url         = module.artifact-registry.repository_url
   service_account_email  = module.service_accounts.app_sa_email
+  command                = "fastapi"
+  args                   = ["run", "src/lecturia/server.py", "--port", "8080"]
   env                    = {
     GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME = var.public_bucket_name
     GOOGLE_CLOUD_LOCATION                   = var.primary_region
@@ -76,6 +78,8 @@ module "cloud_run_worker" {
   primary_region         = var.primary_region
   repository_url         = module.artifact-registry.repository_url
   service_account_email  = module.service_accounts.worker_sa_email
+  command                = "fastapi"
+  args                   = ["run", "src/lecturia/cloud_pipeline/workflow.py", "--port", "8080"]
   env                    = {
     GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME = var.public_bucket_name
     GOOGLE_CLOUD_LOCATION                   = var.primary_region

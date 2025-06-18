@@ -1,3 +1,6 @@
+./.venv
+
+./creds
 ./results
 .env
 .git

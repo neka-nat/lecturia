@@ -102,9 +102,12 @@ async def get_task_status(task_id: str) -> TaskStatus:
 
 
 async def _create_lecture_task(lecture_id: str, config: MovieConfig) -> dict[str, str]:
-    channel = grpc.insecure_channel("gcloud-tasks-emulator:8123")
-    transport = CloudTasksGrpcTransport(channel=channel)
-    client = tasks_v2.CloudTasksClient(transport=transport)
+    if os.getenv("LECTURIA_WORKER_URL"):
+        client = tasks_v2.CloudTasksClient()
+    else:
+        channel = grpc.insecure_channel("gcloud-tasks-emulator:8123")
+        transport = CloudTasksGrpcTransport(channel=channel)
+        client = tasks_v2.CloudTasksClient(transport=transport)
     parent = client.queue_path(os.environ["GOOGLE_CLOUD_PROJECT"], os.environ["GOOGLE_CLOUD_LOCATION"], "lecture-queue")
     logger.info(f"Parent: {parent}")
     task = tasks_v2.Task(

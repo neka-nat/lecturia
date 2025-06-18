@@ -9,6 +9,8 @@
 Lecturia is a lecture generation tool that uses AI to generate lectures.
 You can generate lectures by giving a topic and detailed content.
 
+![home](assets/home.png)
+
 ## Features
 
 * Generate lecture slides by giving a topic and detailed content.

@@ -3,6 +3,8 @@ __pycache__
 .env
 
 results
+
+api/creds
 api/lecturia-public-storage/**/*.png
 api/lecturia-public-storage/**/*.mp4
 

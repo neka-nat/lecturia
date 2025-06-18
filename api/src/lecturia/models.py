@@ -19,7 +19,7 @@ class Event(BaseModel):
         name: イベントの名前
         target: イベントの対象となるキャラクター
     """
-    type: Literal["start", "pose", "slideNext", "slidePrev", "slideStep", "quiz", "end"]
+    type: Literal["start", "pose", "slideNext", "slidePrev", "slideStep", "sprite", "quiz", "end"]
     time_sec: float
     name: str | None = None
     target: Literal["left", "right"] | None = None   # イベントの対象となるキャラクター

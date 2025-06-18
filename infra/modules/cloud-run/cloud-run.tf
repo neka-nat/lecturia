@@ -3,6 +3,8 @@ variable "name" {}
 variable "primary_region" {}
 variable "repository_url" {}
 variable "service_account_email" {}
+variable "command" { type = string }
+variable "args" { type = list(string) }
 variable "env"        { type = map(string) }
 variable "secret_env" { type = map(string) }
 variable "public_access" { type = bool }
@@ -16,6 +18,9 @@ resource "google_cloud_run_v2_service" "service" {
     service_account = var.service_account_email
     containers {
       image = "${var.repository_url}:latest"
+
+      command = [var.command]
+      args    = var.args
 
       dynamic "env" {
         for_each = var.env
