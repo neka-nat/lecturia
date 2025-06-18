@@ -162,6 +162,16 @@ async def _create_event_phase(
     return events
 
 
+@app.get("/")
+async def root():
+    return {"message": "Hello, World!"}
+
+
+@app.get("/health")
+async def health():
+    return {"message": "OK"}
+
+
 @app.post("/tasks/create-lecture")
 async def create_lecture(lecture_id: str, config: MovieConfig = Body(...)):
 

@@ -13,3 +13,7 @@ resource "google_project_service" "required_apis" {
   service            = each.key
   disable_on_destroy = false
 }
+
+output "required_apis" {
+  value = google_project_service.required_apis
+}

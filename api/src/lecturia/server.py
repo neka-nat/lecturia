@@ -1,3 +1,4 @@
+import os
 import urllib.parse
 
 from fastapi import FastAPI, Path, status
@@ -23,7 +24,21 @@ app.add_middleware(
 
 app.include_router(router, prefix="/api")
 
-BASE_URL = "http://localhost:4443/storage/v1/b/lecturia-public-storage/o"
+if os.getenv("STORAGE_EMULATOR_HOST"):
+    BASE_URL = f"http://localhost:4443/storage/v1/b/{os.getenv('GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME')}/o"
+else:
+    BASE_URL = f"https://storage.googleapis.com/{os.getenv('GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME')}/o"
+
+
+@app.get("/")
+async def root():
+    return {"message": "Hello, World!"}
+
+
+@app.get("/health")
+async def health():
+    return {"message": "OK"}
+
 
 @app.get("/static/{full_path:path}")
 async def static_redirect(full_path: str = Path(..., description="ex. css/app.css")):

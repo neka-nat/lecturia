@@ -15,7 +15,7 @@ resource "google_cloud_run_v2_service" "service" {
   template {
     service_account = var.service_account_email
     containers {
-      image = "${var.repository_url}/${var.name}:latest"
+      image = "${var.repository_url}:latest"
 
       dynamic "env" {
         for_each = var.env

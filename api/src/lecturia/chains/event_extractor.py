@@ -99,7 +99,7 @@ class EventExtractor(Runnable):
         audio_file: Path | str,
         first_speaker: Literal["left", "right"] | None = None,
     ) -> EventList:
-        if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
+        if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ or "K_SERVICE" in os.environ:
             file = Part.from_bytes(data=audio_file.read_bytes(), mime_type="audio/mpeg")
         else:
             file = self.client.files.upload(file=str(audio_file))

@@ -33,6 +33,7 @@ resource "null_resource" "submit" {
   }
 }
 
+output "repository_id" { value = google_artifact_registry_repository.lecturia_container_registry.repository_id }
 output "repository_url" {
-  value = local.image_uri
+  value = "${var.primary_region}-docker.pkg.dev/${var.gcp_project_id}/${google_artifact_registry_repository.lecturia_container_registry.repository_id}/${google_artifact_registry_repository.lecturia_container_registry.repository_id}"
 }
