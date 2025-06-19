@@ -1,10 +1,10 @@
 .env
-.git
+.git/
 
-./.venv
-./creds
-./results
-./examples
-./prototype
+.venv/
+creds/
+results/
+examples/
+prototype/
 
 *.mp3
