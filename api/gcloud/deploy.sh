@@ -12,6 +12,7 @@ gcloud run deploy $CLOUD_RUN_API_SERVICE_NAME --image $REPOSITORY_URL \
     --service-account $CLOUD_RUN_API_SERVICE_ACCOUNT --memory=2Gi \
     --update-env-vars LECTURIA_WORKER_URL=$LECTURIA_WORKER_URL \
     --update-env-vars GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME=$GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME \
+    --update-env-vars LECTURIA_WEB_ORIGIN=$LECTURIA_WEB_ORIGIN \
     --allow-unauthenticated
 
 # Workerのデプロイ

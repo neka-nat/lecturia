@@ -36,11 +36,13 @@ async def list_lectures() -> list[LectureInfo]:
     for lecture_id in lectures:
         # Determine lecture status
         lecture_status = "completed"
+        created_at = ""
         has_events = is_exists_in_public_bucket(f"lectures/{lecture_id}/events.json")
 
         # Check task status to determine if lecture failed
         task_status = get_status(lecture_id)
         if task_status:
+            created_at = task_status.created_at.isoformat()
             if task_status.status == "failed":
                 lecture_status = "failed"
             elif task_status.status in ["running", "pending"]:
@@ -64,7 +66,7 @@ async def list_lectures() -> list[LectureInfo]:
                 id=lecture_id,
                 topic=movie_config.topic,
                 detail=movie_config.detail,
-                created_at="",
+                created_at=created_at,
                 status=lecture_status,
             ))
     return lecture_infos

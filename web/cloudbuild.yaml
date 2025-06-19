@@ -1,0 +1,20 @@
+substitutions:
+  _API_ORIGIN: "https://api.lecturia.com"
+  _AR_LOCATION: "asia-northeast1"
+  _AR_REPO: "lecturia-frontend"
+  _IMAGE_NAME: "lecturia-frontend"
+
+steps:
+- name: gcr.io/cloud-builders/docker
+  args:
+    [
+      "build",
+      "-t",
+      "${_AR_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:latest",
+      "--build-arg",
+      "NEXT_PUBLIC_LECTURIA_API_ORIGIN=${_API_ORIGIN}",
+      "."
+    ]
+
+images:
+- "${_AR_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:latest"
