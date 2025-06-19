@@ -13,7 +13,7 @@ export interface LectureListRef {
 }
 
 export const LectureList = forwardRef<LectureListRef, LectureListProps>(
-  ({ onLectureClick, onRegenerateLecture }, ref) => {
+  function LectureListComponent({ onLectureClick, onRegenerateLecture }, ref) {
     const { lectures, isLoading, deleteLecture, fetchLectures } = useLectures();
 
     useImperativeHandle(ref, () => ({

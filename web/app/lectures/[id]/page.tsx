@@ -2,10 +2,20 @@ import { Player } from '@/components/Player';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
+type QuizSection = {
+  name: string;
+  slide_no: number;
+  quizzes: {
+    question: string;
+    choices: string[];
+    answer_index: number;
+  }[];
+};
+
 export default async function LecturePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
   const r = await fetch(
@@ -19,7 +29,7 @@ export default async function LecturePage({
     `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}${manifest.eventsUrl}`,
     { cache: 'no-store' },
   );
-  let quizSections: any[] = [];
+  let quizSections: QuizSection[] = [];
   try {
     const quizResp = await fetch(
       `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}${manifest.quizUrl}`,

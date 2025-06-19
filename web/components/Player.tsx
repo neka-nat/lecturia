@@ -108,12 +108,29 @@ export const Player: React.FC<Props> = ({ manifest }) => {
   },[manifest.sprites]);
 
   /* -------------------------------------------------------------
+     Navigation
+  ------------------------------------------------------------- */
+  const goTo = useCallback((idx:number)=>{
+    idx = Math.max(0, Math.min(idx, eventsPages.length-1));
+    const delta = idx - pageIdx;
+    if (delta === 0) return;
+
+    const msg = delta > 0 ? 'slide-next' : 'slide-prev';
+    for (let i = 0; i < Math.abs(delta); i++) {
+      postToSlide(msg);
+    }
+    setPageIdx(idx);
+    charLeft.current?.setPose('idle');
+    charRight.current?.setPose('idle');
+  }, [pageIdx, postToSlide, eventsPages.length]);
+
+  /* -------------------------------------------------------------
      Timeline hook (per page)
   ------------------------------------------------------------- */
   const { reset: resetTimeline } = useTimeline(
     slideReady && audioRef.current ? audioRef.current : null,
     eventsPages[pageIdx] ?? [],
-    (ev)=> playSignal(ev as any),
+    (ev: Event)=> playSignal(ev),
   );
 
   /* audio source swap on page change */
@@ -127,7 +144,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     charLeft.current?.setPose('idle');
     charRight.current?.setPose('idle');
     if (hasInteracted.current){ a.play().catch(()=>{}); }
-  },[pageIdx, resetTimeline]);
+  },[pageIdx, resetTimeline, manifest.audioUrls]);
 
   /* auto‑advance when audio ends */
   useEffect(()=>{
@@ -135,24 +152,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     const onEnd = ()=>{ if(pageIdx < eventsPages.length-1) goTo(pageIdx+1); };
     a.addEventListener('ended', onEnd);
     return ()=> a.removeEventListener('ended', onEnd);
-  },[pageIdx, eventsPages.length]);
-
-  /* -------------------------------------------------------------
-     Navigation
-  ------------------------------------------------------------- */
-  const goTo = (idx:number)=>{
-    idx = Math.max(0, Math.min(idx, eventsPages.length-1));
-    const delta = idx - pageIdx;
-    if (delta === 0) return;
-
-    const msg = delta > 0 ? 'slide-next' : 'slide-prev';
-    for (let i = 0; i < Math.abs(delta); i++) {
-      postToSlide(msg);
-    }
-    setPageIdx(idx);
-    charLeft.current?.setPose('idle');
-    charRight.current?.setPose('idle');
-  };
+  },[pageIdx, eventsPages.length, goTo]);
 
   /* -------------------------------------------------------------
      Event → action
@@ -164,7 +164,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
       case 'slideStep': postToSlide('slide-step'); break;
       case 'pose':{
         const actor = ev.target==='left' ? charLeft.current : charRight.current;
-        actor?.setPose((ev.name as any)||'idle');
+        actor?.setPose((ev.name)||'idle');
         break;
       }
       case 'sprite':{
@@ -182,7 +182,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
       }
       default: break;
     }
-  },[pageIdx, postToSlide]);
+  },[pageIdx, postToSlide, goTo, manifest.quizSections]);
 
   /* -------------------------------------------------------------
      Controls
@@ -242,7 +242,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
       // ▶ 不正解なら同じページを続行
       audioRef.current?.play().catch(() => {});
     }
-  }, [pageIdx]);
+  }, [pageIdx, goTo]);
 
   /* -------------------------------------------------------------
      Render

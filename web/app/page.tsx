@@ -7,12 +7,11 @@ import { BackgroundDecorations } from '../components/BackgroundDecorations';
 import { LectureForm } from '../components/LectureForm';
 import { LectureList } from '../components/LectureList';
 import { GlobalStyles } from '../components/GlobalStyles';
-import { useTaskStatus } from '../hooks/useTaskStatus';
 
 export default function HomePage() {
   const router = useRouter();
   const lectureListRef = useRef<{ refreshLectures: () => void } | null>(null);
-  const [regeneratingTasks, setRegeneratingTasks] = useState<Set<string>>(new Set());
+  const [, setRegeneratingTasks] = useState<Set<string>>(new Set());
 
   const handleLectureClick = (lectureId: string) => {
     router.push(`/lectures/${lectureId}`);
