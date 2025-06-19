@@ -10,12 +10,13 @@ from .router import router
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-if os.getenv("LECTURIA_WEB_ORIGIN"):
-    origins.append(os.getenv("LECTURIA_WEB_ORIGIN"))
+origins_env = os.getenv("CORS_ALLOWED_ORIGINS", "")
+origins = [o.strip() for o in origins_env.split(",") if o.strip()]
+if not origins:
+    origins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
