@@ -64,7 +64,7 @@ module "cloud_run_app" {
   env                    = {
     GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME = var.public_bucket_name
     GOOGLE_CLOUD_LOCATION                   = var.primary_region
-    WORKER_URL                              = module.cloud_run_worker.url
+    LECTURIA_WORKER_URL                     = module.cloud_run_worker.url
   }
   secret_env = {}
   public_access = true
