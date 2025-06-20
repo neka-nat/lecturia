@@ -104,7 +104,7 @@ async def get_task_status(task_id: str) -> TaskStatus:
 
 
 async def _create_lecture_task(lecture_id: str, config: MovieConfig) -> dict[str, str]:
-    if os.getenv("LECTURIA_WORKER_URL"):
+    if os.getenv("LECTURIA_WORKER_URL") and os.getenv("LECTURIA_WORKER_URL") not in ["http://localhost:8001", "http://worker:8001"]:
         client = tasks_v2.CloudTasksClient()
     else:
         channel = grpc.insecure_channel("gcloud-tasks-emulator:8123")
@@ -115,7 +115,7 @@ async def _create_lecture_task(lecture_id: str, config: MovieConfig) -> dict[str
     task = tasks_v2.Task(
         http_request=tasks_v2.HttpRequest(
             http_method=tasks_v2.HttpMethod.POST,
-            url=f"{os.environ['WORKER_URL']}/tasks/create-lecture?lecture_id={lecture_id}",
+            url=f"{os.environ['LECTURIA_WORKER_URL']}/tasks/create-lecture?lecture_id={lecture_id}",
             headers={"Content-Type": "application/json"},
             body=config.model_dump_json().encode(),
         )

@@ -44,7 +44,7 @@ services:
       - .:/app
     environment:
       - STORAGE_EMULATOR_HOST=http://gcs:4443
-      - WORKER_URL=http://worker:8001
+      - LECTURIA_WORKER_URL=http://worker:8001
       - FIRESTORE_EMULATOR_HOST=firestore:8002
     env_file:
       - .env

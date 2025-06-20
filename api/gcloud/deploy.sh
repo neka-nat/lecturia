@@ -11,6 +11,8 @@ gcloud run deploy $CLOUD_RUN_API_SERVICE_NAME --image $REPOSITORY_URL \
     --args "run,src/lecturia/server.py,--port,8080" \
     --service-account $CLOUD_RUN_API_SERVICE_ACCOUNT --memory=2Gi \
     --update-env-vars LECTURIA_WORKER_URL=$LECTURIA_WORKER_URL \
+    --update-env-vars GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT \
+    --update-env-vars GOOGLE_CLOUD_LOCATION=$GOOGLE_CLOUD_LOCATION \
     --update-env-vars GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME=$GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME \
     --update-env-vars CORS_ALLOWED_ORIGINS=$CORS_ALLOWED_ORIGINS \
     --allow-unauthenticated
