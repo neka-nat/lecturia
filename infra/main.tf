@@ -63,8 +63,10 @@ module "cloud_run_app" {
   args                   = ["run", "src/lecturia/server.py", "--port", "8080"]
   env                    = {
     GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME = var.public_bucket_name
+    GOOGLE_CLOUD_PROJECT                    = var.gcp_project_id
     GOOGLE_CLOUD_LOCATION                   = var.primary_region
     LECTURIA_WORKER_URL                     = module.cloud_run_worker.url
+    CORS_ALLOWED_ORIGINS                    = var.cors_allowed_origins
   }
   secret_env = {}
   public_access = true
@@ -82,6 +84,7 @@ module "cloud_run_worker" {
   args                   = ["run", "src/lecturia/cloud_pipeline/workflow.py", "--port", "8080"]
   env                    = {
     GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME = var.public_bucket_name
+    GOOGLE_CLOUD_PROJECT                    = var.gcp_project_id
     GOOGLE_CLOUD_LOCATION                   = var.primary_region
   }
   secret_env = {

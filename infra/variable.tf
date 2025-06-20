@@ -29,3 +29,8 @@ variable "secrets_file" {
   type        = string
   default     = "secrets.yaml"
 }
+
+variable "cors_allowed_origins" {
+  description = "CORS 許可するオリジン"
+  type        = string
+}
