@@ -102,11 +102,28 @@ export function useLectures() {
     }
   };
 
+  const addOptimisticLecture = useCallback(
+    (lec: Omit<Lecture, 'created_at'> & { created_at?: string }) => {
+      setLectures(prev => {
+        if (prev.some(l => l.id === lec.id)) return prev;      // 二重防止
+        return [
+          {
+            ...lec,
+            created_at: lec.created_at ?? new Date().toISOString(),
+          },
+          ...prev,
+        ];
+      });
+    },
+    [],
+  );
+
   return {
     lectures,
     isLoading,
     fetchLectures,
     deleteLecture,
     regenerateLecture,
+    addOptimisticLecture,
   };
 }

@@ -7,6 +7,7 @@ import { BackgroundDecorations } from '../components/BackgroundDecorations';
 import { LectureForm } from '../components/LectureForm';
 import { LectureList } from '../components/LectureList';
 import { GlobalStyles } from '../components/GlobalStyles';
+import { Lecture } from '../hooks/useLectures';
 
 export default function HomePage() {
   const router = useRouter();
@@ -59,7 +60,9 @@ export default function HomePage() {
     }
   };
 
-  const handleAfterCreate = () => lectureListRef.current?.refreshLectures();
+  const handleLectureCreated = (lec: Lecture) => {
+    lectureListRef.current?.addLecture(lec);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -69,7 +72,7 @@ export default function HomePage() {
         <Header />
         
         <div className="grid lg:grid-cols-5 gap-8">
-          <LectureForm onAfterCreate={handleAfterCreate} />
+          <LectureForm onLectureCreated={handleLectureCreated} />
           <LectureList 
             ref={lectureListRef} 
             onLectureClick={handleLectureClick}

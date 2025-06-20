@@ -3,12 +3,13 @@
 import { Plus, Sparkles, Loader2 } from 'lucide-react';
 import { CharacterSelector } from './CharacterSelector';
 import { useLectureForm } from '../hooks/useLectureForm';
+import { Lecture } from '../hooks/useLectures';
 
 interface LectureFormProps {
-  onAfterCreate?: () => void;
+  onLectureCreated?: (l: Lecture) => void;
 }
 
-export function LectureForm({ onAfterCreate }: LectureFormProps) {
+export function LectureForm({ onLectureCreated }: LectureFormProps) {
   const {
     topic,
     setTopic,
@@ -18,15 +19,20 @@ export function LectureForm({ onAfterCreate }: LectureFormProps) {
     setSelectedCharacter,
     isSubmitting,
     createLecture,
-    resetForm,
   } = useLectureForm();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const ok = await createLecture();
-    if (ok) {
-      resetForm();
-      onAfterCreate?.();
+    const result = await createLecture();
+    if (result) {
+      const { taskId } = result;
+      onLectureCreated?.({
+        id: taskId,
+        topic,
+        detail,
+        created_at: new Date().toISOString(),
+        status: 'pending',
+      });
     }
   };
 

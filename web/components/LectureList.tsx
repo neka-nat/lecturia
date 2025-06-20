@@ -1,6 +1,6 @@
 import { BookOpen, Loader2 } from 'lucide-react';
 import { forwardRef, useImperativeHandle } from 'react';
-import { useLectures } from '../hooks/useLectures';
+import { Lecture, useLectures } from '../hooks/useLectures';
 import { LectureCard } from './LectureCard';
 
 interface LectureListProps {
@@ -11,14 +11,16 @@ interface LectureListProps {
 
 export interface LectureListRef {
   refreshLectures: () => void;
+  addLecture(lec: Lecture): void;
 }
 
 export const LectureList = forwardRef<LectureListRef, LectureListProps>(
   function LectureListComponent({ onLectureClick, onRegenerateLecture, regeneratingTasks }, ref) {
-    const { lectures, isLoading, deleteLecture, fetchLectures } = useLectures();
+    const { lectures, isLoading, deleteLecture, fetchLectures, addOptimisticLecture } = useLectures();
 
     useImperativeHandle(ref, () => ({
       refreshLectures: fetchLectures,
+      addLecture: addOptimisticLecture,
     }));
 
   return (
