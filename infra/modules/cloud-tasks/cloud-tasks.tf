@@ -8,6 +8,11 @@ resource "google_cloud_tasks_queue" "this" {
   project  = var.gcp_project_id
   location = var.location
 
+  retry_config {
+    max_attempts       = 1
+    max_retry_duration = "0s"
+  }
+
   depends_on = [var.required_apis]
 }
 
