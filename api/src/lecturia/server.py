@@ -30,7 +30,7 @@ app.include_router(router, prefix="/api")
 if os.getenv("STORAGE_EMULATOR_HOST"):
     BASE_URL = f"http://localhost:4443/storage/v1/b/{os.getenv('GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME')}/o"
 else:
-    BASE_URL = f"https://storage.googleapis.com/{os.getenv('GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME')}/o"
+    BASE_URL = f"https://storage.googleapis.com/{os.getenv('GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME')}"
 
 
 @app.get("/")
@@ -47,6 +47,8 @@ async def health():
 async def static_redirect(full_path: str = Path(..., description="ex. css/app.css")):
     # パス traversal 対策
     safe_path = urllib.parse.quote(full_path.lstrip("/"), safe=":/~!@$&()*+,;=")
-    url = f"{BASE_URL}/{safe_path}?alt=media"
+    url = f"{BASE_URL}/{safe_path}"
+    if os.getenv("STORAGE_EMULATOR_HOST"):
+        url += "?alt=media"
     logger.info(f"Redirecting to {url}")
     return RedirectResponse(url, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
