@@ -8,6 +8,7 @@ resource "google_project_service" "required_apis" {
     "firestore.googleapis.com",
     "cloudtasks.googleapis.com",
     "iamcredentials.googleapis.com",
+    "aiplatform.googleapis.com",
   ])
 
   service            = each.key

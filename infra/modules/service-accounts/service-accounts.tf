@@ -29,6 +29,7 @@ locals {
     "roles/secretmanager.secretAccessor",
     "roles/storage.objectAdmin",
     "roles/artifactregistry.reader",
+    "roles/aiplatform.user",
   ]
 }
 

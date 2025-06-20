@@ -76,11 +76,14 @@ def output_format_prompt(multiple_speakers: bool) -> str:
 
 class EventExtractor(Runnable):
     def __init__(self):
-        self.client = genai.Client(
-            vertexai=True,  # vertex aiを使用
-            project=os.environ["GOOGLE_CLOUD_PROJECT"],
-            location="global"
-        )
+        if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ or "K_SERVICE" in os.environ:
+            self.client = genai.Client(
+                vertexai=True,  # vertex aiを使用
+                project=os.environ["GOOGLE_CLOUD_PROJECT"],
+                location="us-central1"
+            )
+        else:
+            self.client = genai.Client()
         self.model = "gemini-2.5-flash-preview-05-20"
 
     def invoke(
