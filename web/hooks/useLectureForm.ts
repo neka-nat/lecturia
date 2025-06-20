@@ -3,6 +3,8 @@ import { Character, AVAILABLE_CHARACTERS } from '../types/character';
 
 const TASK_ID_STORAGE_KEY = 'lecturia-current-task-id';
 
+export interface CreateLectureResult { taskId: string }
+
 export function useLectureForm() {
   const [topic, setTopic] = useState('');
   const [detail, setDetail] = useState('');
@@ -18,42 +20,39 @@ export function useLectureForm() {
     }
   }, []);
 
-  const createLecture = async (): Promise<boolean> => {
-    if (!topic.trim()) return false;
+  const createLecture = async (): Promise<CreateLectureResult | null> => {
+    if (!topic.trim()) return null;
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(
+      const res = await fetch(
         `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}/api/create-lecture`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             topic: topic.trim(),
             detail: detail.trim() || null,
             characters: [selectedCharacter],
           }),
-        }
+        },
       );
 
-      if (response.ok) {
-        const result = await response.json();
-        const taskId = result.task_id;
-        setCurrentTaskId(taskId);
-        // Persist task ID to localStorage
-        localStorage.setItem(TASK_ID_STORAGE_KEY, taskId);
-        resetForm();
-        return true;
-      } else {
+      if (!res.ok) {
         alert('講義作成に失敗しました。');
-        return false;
+        return null;
       }
-    } catch (error) {
-      console.error('Error creating lecture:', error);
+
+      const { task_id: taskId } = await res.json();
+      setCurrentTaskId(taskId);
+      localStorage.setItem(TASK_ID_STORAGE_KEY, taskId);
+      resetForm();
+
+      return { taskId };
+    } catch (e) {
+      console.error(e);
       alert('講義作成中にエラーが発生しました。');
-      return false;
+      return null;
     } finally {
       setIsSubmitting(false);
     }

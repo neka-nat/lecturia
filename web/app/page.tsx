@@ -6,12 +6,13 @@ import { Header } from '../components/Header';
 import { BackgroundDecorations } from '../components/BackgroundDecorations';
 import { LectureForm } from '../components/LectureForm';
 import { LectureList } from '../components/LectureList';
+import type { LectureListRef } from '../components/LectureList';
 import { GlobalStyles } from '../components/GlobalStyles';
 import { Lecture } from '../hooks/useLectures';
 
 export default function HomePage() {
   const router = useRouter();
-  const lectureListRef = useRef<{ refreshLectures: () => void } | null>(null);
+  const lectureListRef = useRef<LectureListRef | null>(null)
   const [regeneratingTasks, setRegeneratingTasks] = useState<Set<string>>(new Set());
 
   const handleLectureClick = (lectureId: string) => {

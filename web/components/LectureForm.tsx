@@ -24,16 +24,15 @@ export function LectureForm({ onLectureCreated }: LectureFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = await createLecture();
-    if (result) {
-      const { taskId } = result;
-      onLectureCreated?.({
-        id: taskId,
-        topic,
-        detail,
-        created_at: new Date().toISOString(),
-        status: 'pending',
-      });
-    }
+    if (!result) return;
+
+    onLectureCreated?.({
+      id: result.taskId,
+      topic,
+      detail,
+      created_at: new Date().toISOString(),
+      status: 'pending',
+    });
   };
 
   return (
