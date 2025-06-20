@@ -63,8 +63,8 @@ def _create_script_phase(lecture_id: str, config: MovieConfig, result_slide: Htm
     return result_script
 
 
-async def _create_quiz_phase(lecture_id: str, config: MovieConfig, result_slide: HtmlSlide) -> QuizSectionList:
-    quiz_generator = create_quiz_generator_chain(config.speakers)
+async def _create_quiz_phase(lecture_id: str, result_slide: HtmlSlide) -> QuizSectionList:
+    quiz_generator = create_quiz_generator_chain()
     if is_exists_in_public_bucket(f"lectures/{lecture_id}/result_quiz.json"):
         logger.info(f"Loading result_quiz.json from {f'lectures/{lecture_id}/result_quiz.json'}")
         data = download_data_from_public_bucket(f"lectures/{lecture_id}/result_quiz.json")
@@ -104,6 +104,8 @@ async def _generate_audio_phase(lecture_id: str, config: MovieConfig, result_scr
             removed_silence_audio.export(audio_file, format="mp3")
         else:
             logger.info(f"Loading audio from {audio_file}")
+            data = download_data_from_public_bucket(f"lectures/{lecture_id}/{audio_file.name}")
+            audio_file.write_bytes(data)
         audio_files.append(audio_file)
     # Calculate audio segments with page transition duration
     audio_segments: list[AudioSegment] = []
@@ -204,7 +206,7 @@ async def create_lecture(lecture_id: str, config: MovieConfig = Body(...)):
 
         # Phase 3: Create quiz (60% progress)
         upsert_status(lecture_id, "running", progress_percentage=60, current_phase="クイズ作成中")
-        result_quiz_task = _create_quiz_phase(lecture_id, config, result_slide)
+        result_quiz_task = _create_quiz_phase(lecture_id, result_slide)
 
         # Phase 4: Generate audio (75% progress)
         upsert_status(lecture_id, "running", progress_percentage=50, current_phase="音声生成中")
