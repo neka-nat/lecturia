@@ -11,14 +11,16 @@ import { GlobalStyles } from '../components/GlobalStyles';
 export default function HomePage() {
   const router = useRouter();
   const lectureListRef = useRef<{ refreshLectures: () => void } | null>(null);
-  const [, setRegeneratingTasks] = useState<Set<string>>(new Set());
+  const [regeneratingTasks, setRegeneratingTasks] = useState<Set<string>>(new Set());
 
   const handleLectureClick = (lectureId: string) => {
     router.push(`/lectures/${lectureId}`);
   };
 
   const handleTaskComplete = () => {
-    // Refresh the lecture list when a task completes
+    // Clear regenerating tasks and refresh the lecture list when a task completes
+    setRegeneratingTasks(new Set());
+    localStorage.removeItem('regenerating_tasks');
     if (lectureListRef.current) {
       lectureListRef.current.refreshLectures();
     }
@@ -70,6 +72,7 @@ export default function HomePage() {
             ref={lectureListRef} 
             onLectureClick={handleLectureClick}
             onRegenerateLecture={handleRegenerateLecture}
+            regeneratingTasks={regeneratingTasks}
           />
         </div>
       </div>

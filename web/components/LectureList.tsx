@@ -6,6 +6,7 @@ import { LectureCard } from './LectureCard';
 interface LectureListProps {
   onLectureClick: (lectureId: string) => void;
   onRegenerateLecture?: (lectureId: string) => Promise<string | null>;
+  regeneratingTasks?: Set<string>;
 }
 
 export interface LectureListRef {
@@ -13,7 +14,7 @@ export interface LectureListRef {
 }
 
 export const LectureList = forwardRef<LectureListRef, LectureListProps>(
-  function LectureListComponent({ onLectureClick, onRegenerateLecture }, ref) {
+  function LectureListComponent({ onLectureClick, onRegenerateLecture, regeneratingTasks }, ref) {
     const { lectures, isLoading, deleteLecture, fetchLectures } = useLectures();
 
     useImperativeHandle(ref, () => ({
@@ -61,6 +62,7 @@ export const LectureList = forwardRef<LectureListRef, LectureListProps>(
                 onLectureClick={onLectureClick}
                 onDeleteLecture={deleteLecture}
                 onRegenerateLecture={onRegenerateLecture}
+                isRegenerating={regeneratingTasks?.has(lecture.id) || false}
               />
             ))}
           </div>

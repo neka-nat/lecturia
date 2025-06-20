@@ -7,9 +7,10 @@ interface LectureCardProps {
   onLectureClick: (lectureId: string) => void;
   onDeleteLecture: (lectureId: string, lectureTitle: string) => void;
   onRegenerateLecture?: (lectureId: string) => void;
+  isRegenerating?: boolean;
 }
 
-export function LectureCard({ lecture, index, onLectureClick, onDeleteLecture, onRegenerateLecture }: LectureCardProps) {
+export function LectureCard({ lecture, index, onLectureClick, onDeleteLecture, onRegenerateLecture, isRegenerating }: LectureCardProps) {
   const getStatusInfo = () => {
     switch (lecture.status) {
       case 'failed':
@@ -89,12 +90,23 @@ export function LectureCard({ lecture, index, onLectureClick, onDeleteLecture, o
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onRegenerateLecture(lecture.id);
+                if (!isRegenerating) {
+                  onRegenerateLecture(lecture.id);
+                }
               }}
-              className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100"
-              title="講義を再生成"
+              disabled={isRegenerating}
+              className={`p-2 rounded-lg transition-all duration-200 ${
+                isRegenerating 
+                  ? 'text-blue-500 bg-blue-50 cursor-not-allowed opacity-100' 
+                  : 'text-slate-400 hover:text-blue-500 hover:bg-blue-50 opacity-0 group-hover:opacity-100'
+              }`}
+              title={isRegenerating ? '再生成中...' : '講義を再生成'}
             >
-              <RefreshCw className="w-4 h-4" />
+              {isRegenerating ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
             </button>
           )}
           <button
