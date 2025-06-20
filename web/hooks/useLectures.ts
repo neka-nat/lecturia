@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export interface Lecture {
   id: string;
@@ -6,27 +6,44 @@ export interface Lecture {
   detail: string | null;
   created_at: string;
   status: string; // "completed", "failed", "running", "pending"
+  progress_percentage?: number;
+  current_phase?: string;
 }
 
 export function useLectures() {
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchLectures = async () => {
+  /** 多重リクエスト防止フラグ */
+  const isFetching = useRef(false);
+
+  const fetchLectures = useCallback(async () => {
+    if (isFetching.current) return;
+    isFetching.current = true;
     try {
-      const response = await fetch(
+      const r = await fetch(
         `${process.env.NEXT_PUBLIC_LECTURIA_API_ORIGIN}/api/lectures`
       );
-      if (response.ok) {
-        const lecturesData = await response.json();
-        setLectures(lecturesData);
-      }
-    } catch (error) {
-      console.error('Error fetching lectures:', error);
+      if (r.ok) setLectures(await r.json());
     } finally {
+      isFetching.current = false;
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchLectures();
+  }, [fetchLectures]);
+
+  useEffect(() => {
+    const hasRunning = lectures.some(l =>
+      l.status === 'running' || l.status === 'pending'
+    );
+    if (!hasRunning) return;
+
+    const id = setInterval(fetchLectures, 5000);
+    return () => clearInterval(id);
+  }, [lectures, fetchLectures]);
 
   const deleteLecture = async (lectureId: string, lectureTitle: string): Promise<boolean> => {
     if (!confirm(`「${lectureTitle}」を削除しますか？この操作は取り消せません。`)) {
@@ -84,10 +101,6 @@ export function useLectures() {
       return null;
     }
   };
-
-  useEffect(() => {
-    fetchLectures();
-  }, []);
 
   return {
     lectures,

@@ -22,19 +22,12 @@ export function LectureCard({ lecture, index, onLectureClick, onDeleteLecture, o
           canPlay: false,
         };
       case 'running':
-        return {
-          icon: <Loader2 className="w-4 h-4 animate-spin" />,
-          label: '生成中',
-          color: 'from-blue-100 to-blue-100 text-blue-700 border-blue-200',
-          bgColor: 'bg-blue-500',
-          canPlay: false,
-        };
       case 'pending':
         return {
-          icon: <Loader2 className="w-4 h-4 animate-spin" />,
-          label: '待機中',
-          color: 'from-yellow-100 to-yellow-100 text-yellow-700 border-yellow-200',
-          bgColor: 'bg-yellow-500',
+          icon: null,
+          label: '生成中',
+          color: 'from-blue-100 …',
+          bgColor: 'bg-blue-500',
           canPlay: false,
         };
       default: // completed
@@ -124,6 +117,20 @@ export function LectureCard({ lecture, index, onLectureClick, onDeleteLecture, o
           )}
         </div>
       </div>
+      { (lecture.status==='running'||lecture.status==='pending') && (
+        <div className="mt-3">
+          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+            <span>{lecture.current_phase ?? '待機中'}</span>
+            <span>{lecture.progress_percentage ?? 0}%</span>
+          </div>
+          <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div
+              style={{width:`${lecture.progress_percentage ?? 0}%`}}
+              className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

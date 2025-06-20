@@ -59,6 +59,8 @@ export default function HomePage() {
     }
   };
 
+  const handleAfterCreate = () => lectureListRef.current?.refreshLectures();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       <BackgroundDecorations />
@@ -67,7 +69,7 @@ export default function HomePage() {
         <Header />
         
         <div className="grid lg:grid-cols-5 gap-8">
-          <LectureForm onTaskComplete={handleTaskComplete} />
+          <LectureForm onAfterCreate={handleAfterCreate} />
           <LectureList 
             ref={lectureListRef} 
             onLectureClick={handleLectureClick}

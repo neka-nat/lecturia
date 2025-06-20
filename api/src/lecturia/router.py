@@ -23,6 +23,8 @@ class LectureInfo(BaseModel):
     detail: str | None = None
     created_at: str
     status: Literal["completed", "failed", "running", "pending"] = "completed"
+    progress_percentage: int | None = None
+    current_phase: str | None = None
 
 
 router = fastapi.APIRouter()
@@ -37,6 +39,8 @@ async def list_lectures() -> list[LectureInfo]:
         # Determine lecture status
         lecture_status = "completed"
         created_at = ""
+        progress = None
+        phase = None
         has_events = is_exists_in_public_bucket(f"lectures/{lecture_id}/events.json")
 
         # Check task status to determine if lecture failed
@@ -47,6 +51,8 @@ async def list_lectures() -> list[LectureInfo]:
                 lecture_status = "failed"
             elif task_status.status in ["running", "pending"]:
                 lecture_status = task_status.status
+            progress = task_status.progress_percentage
+            phase = task_status.current_phase
         elif not has_events:
             logger.info(f"Find incomplete lecture without task status: {lecture_id}")
             lecture_status = "failed"
@@ -68,6 +74,8 @@ async def list_lectures() -> list[LectureInfo]:
                 detail=movie_config.detail,
                 created_at=created_at,
                 status=lecture_status,
+                progress_percentage=progress,
+                current_phase=phase,
             ))
     return lecture_infos
 
