@@ -25,6 +25,10 @@ StatusType = Literal["not_started", "pending", "running", "completed", "failed"]
 
 
 class TaskStatus(Model):
+    """
+    講義作成タスクの状態を管理するモデル
+    """
+
     __collection__ = "task_status"
     status: StatusType = "not_started"
     progress_percentage: int = 0
@@ -42,7 +46,13 @@ def get_status(id: str) -> TaskStatus | None:
         return None
 
 
-def upsert_status(id: str, status: StatusType, error: str | None = None, progress_percentage: int | None = None, current_phase: str | None = None) -> TaskStatus:
+def upsert_status(
+    id: str,
+    status: StatusType,
+    error: str | None = None,
+    progress_percentage: int | None = None,
+    current_phase: str | None = None,
+) -> TaskStatus:
     try:
         task_status = TaskStatus.get_by_id(id)
     except Exception as e:

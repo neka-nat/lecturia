@@ -1,5 +1,4 @@
 import tempfile
-import time
 import shutil
 from pathlib import Path
 
@@ -11,15 +10,15 @@ from pydub import AudioSegment
 
 from ..chains.quiz_generator import create_quiz_generator_chain
 from ..chains.slide_maker import HtmlSlide, create_slide_maker_chain
-from ..chains.slide_to_script import ScriptList, create_slide_to_script_chain
+from ..chains.slide_to_script import Script, ScriptList, create_slide_to_script_chain
 from ..chains.tts import Talk, create_tts_chain
 from ..chains.event_extractor import create_event_extractor_chain
 from ..slide_editor import edit_slide
-from ..media import remove_long_silence
+from ..utils.media import remove_long_silence
 from ..models import MovieConfig, EventList, Event, QuizSectionList
 from ..storage import is_exists_in_public_bucket, download_data_from_public_bucket, upload_data_to_public_bucket
 from ..firestore import upsert_status
-
+from ..utils.async_tools import gather_limited
 
 app = FastAPI()
 
@@ -80,12 +79,19 @@ async def _create_quiz_phase(lecture_id: str, result_slide: HtmlSlide) -> QuizSe
     return result_quiz
 
 
-async def _generate_audio_phase(lecture_id: str, config: MovieConfig, result_script: ScriptList, temp_dir: str) -> tuple[list[Path], np.ndarray]:
+async def _generate_audio_phase(
+    lecture_id: str,
+    config: MovieConfig,
+    result_script: ScriptList,
+    temp_dir: str,
+    max_parallel: int = 3,
+) -> tuple[list[Path], np.ndarray]:
     tts = create_tts_chain()
-    audio_files: list[Path] = []
-    for script in result_script.scripts:
+
+    async def _render_one(script: Script) -> Path:
         audio_file = Path(temp_dir) / f"audio_{script.slide_no}.mp3"
-        if not is_exists_in_public_bucket(f"lectures/{lecture_id}/audio_{script.slide_no}.mp3"):
+
+        if not is_exists_in_public_bucket(f"lectures/{lecture_id}/{audio_file.name}"):
             if len(config.characters) == 1:
                 text = script.script[0].content
                 audio = await tts.ainvoke(text, voice_type=config.characters[0].voice_type)
@@ -99,14 +105,23 @@ async def _generate_audio_phase(lecture_id: str, config: MovieConfig, result_scr
                     for speaker in script.script
                 ]
                 audio = await tts.multi_speaker_ainvoke(talks)
+
             audio.save_mp3(str(audio_file))
-            removed_silence_audio = remove_long_silence(AudioSegment.from_mp3(audio_file))
-            removed_silence_audio.export(audio_file, format="mp3")
+            removed = remove_long_silence(AudioSegment.from_mp3(audio_file))
+            removed.export(audio_file, format="mp3")
+            upload_data_to_public_bucket(
+                audio_file.read_bytes(), f"lectures/{lecture_id}/{audio_file.name}", "audio/mpeg"
+            )
         else:
-            logger.info(f"Loading audio from {audio_file}")
             data = download_data_from_public_bucket(f"lectures/{lecture_id}/{audio_file.name}")
             audio_file.write_bytes(data)
-        audio_files.append(audio_file)
+        return audio_file
+
+    audio_files = await gather_limited(
+        [_render_one(script) for script in result_script.scripts],
+        max_parallel=max_parallel,
+    )
+
     # Calculate audio segments with page transition duration
     audio_segments: list[AudioSegment] = []
     for audio_file in audio_files:
@@ -126,6 +141,7 @@ async def _create_event_phase(
     audio_files: list[Path],
     slide_page_event_sec: np.ndarray,
     speaker_left_right_map: dict[str, str],
+    max_parallel: int = 3,
 ) -> EventList:
     slide_no_to_quiz_section_map = {quiz_section.slide_no: quiz_section for quiz_section in result_quiz.quiz_sections}
 
@@ -135,30 +151,43 @@ async def _create_event_phase(
         data = download_data_from_public_bucket(f"lectures/{lecture_id}/events.json")
         events: EventList = EventList.model_validate_json(data.decode("utf-8"))
     else:
-        events: EventList = EventList(events=[])
-        for slide_no, audio_file in enumerate(audio_files):
+        async def _extract_one(slide_no: int, audio_file: Path) -> list[Event]:
             first_speaker = (
                 speaker_left_right_map[result_script.scripts[slide_no].script[0].name]
                 if len(speaker_left_right_map) > 1
                 else None
             )
-            events_anim: EventList = await event_extractor.ainvoke(result_slide.html, slide_no + 1, audio_file, first_speaker)
-            prev_sec = slide_page_event_sec[slide_no - 1] if slide_no > 0 else 0
-            events.events.extend(
-                [
-                    Event(type=event.type, time_sec=prev_sec + event.time_sec, name=event.name, target=event.target)
-                    for event in events_anim.events
-                ]
+            ev = await event_extractor.ainvoke(
+                result_slide.html,
+                slide_no + 1,
+                audio_file,
+                first_speaker,
             )
-            events.events.append(Event(type="slideNext", time_sec=slide_page_event_sec[slide_no]))
+            prev_sec = slide_page_event_sec[slide_no - 1] if slide_no > 0 else 0
+            # 開始時刻をずらしたうえで返す
+            adjusted = [
+                Event(type=e.type, time_sec=prev_sec + e.time_sec, name=e.name, target=e.target)
+                for e in ev.events
+            ] + [
+                Event(type="slideNext", time_sec=slide_page_event_sec[slide_no])
+            ]
+            # クイズがあれば追加
             if slide_no in slide_no_to_quiz_section_map:
-                events.events.append(
+                adjusted.append(
                     Event(
                         type="quiz",
                         time_sec=slide_page_event_sec[slide_no],
                         name=slide_no_to_quiz_section_map[slide_no].name,
                     )
                 )
+            return adjusted
+
+        results = await gather_limited(
+            [_extract_one(idx, f) for idx, f in enumerate(audio_files)],
+            max_parallel=max_parallel,
+        )
+        for ev_list in results:
+            events.events.extend(ev_list)
         logger.info(f"Events: {events}")
         upload_data_to_public_bucket(events.model_dump_json(), f"lectures/{lecture_id}/events.json", "application/json")
     return events
@@ -176,9 +205,7 @@ async def health():
 
 @app.post("/tasks/create-lecture")
 async def create_lecture(lecture_id: str, config: MovieConfig = Body(...)):
-
     upsert_status(lecture_id, "running", progress_percentage=0, current_phase="初期化中")
-    
     try:
         speaker_left_right_map = {
             speaker.name: "right" if i == 0 else "left" for i, speaker in enumerate(config.speakers)
@@ -199,7 +226,7 @@ async def create_lecture(lecture_id: str, config: MovieConfig = Body(...)):
         # Phase 1: Create slides (25% progress)
         upsert_status(lecture_id, "running", progress_percentage=10, current_phase="スライド生成中")
         result_slide = _create_slide_phase(lecture_id, config)
-        
+
         # Phase 2: Create script (50% progress)
         upsert_status(lecture_id, "running", progress_percentage=25, current_phase="スクリプト作成中")
         result_script = _create_script_phase(lecture_id, config, result_slide)
@@ -212,7 +239,7 @@ async def create_lecture(lecture_id: str, config: MovieConfig = Body(...)):
         upsert_status(lecture_id, "running", progress_percentage=50, current_phase="音声生成中")
         temp_dir = tempfile.mkdtemp()
         audio_files, slide_page_event_sec = await _generate_audio_phase(lecture_id, config, result_script, temp_dir)
-        
+
         # Phase 5: Create events (90% progress)
         result_quiz = await result_quiz_task
         upsert_status(lecture_id, "running", progress_percentage=75, current_phase="イベント作成中")
