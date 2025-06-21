@@ -177,8 +177,6 @@ export const Player: React.FC<Props> = ({ manifest }) => {
       }
       case 'quiz': {       
         audioRef.current?.pause();  // 講義音声ストップ
-        // キャラをポイントポーズにしておく
-        charRight.current?.setPose('idle');
         const section = manifest.quizSections.find(s => s.name === ev.name);
         if (section) setQuizOpen(section);
         break;
@@ -234,8 +232,6 @@ export const Player: React.FC<Props> = ({ manifest }) => {
   };
   const handleQuizClose = useCallback(() => {
     setQuizOpen(null);
-    charLeft.current?.setPose('idle');
-    charRight.current?.setPose('idle');
     audioRef.current?.play().catch(() => {});
   }, []);
 
