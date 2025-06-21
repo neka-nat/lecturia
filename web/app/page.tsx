@@ -19,15 +19,6 @@ export default function HomePage() {
     router.push(`/lectures/${lectureId}`);
   };
 
-  const handleTaskComplete = () => {
-    // Clear regenerating tasks and refresh the lecture list when a task completes
-    setRegeneratingTasks(new Set());
-    localStorage.removeItem('regenerating_tasks');
-    if (lectureListRef.current) {
-      lectureListRef.current.refreshLectures();
-    }
-  };
-
   const handleRegenerateLecture = async (lectureId: string): Promise<string | null> => {
     try {
       const response = await fetch(
