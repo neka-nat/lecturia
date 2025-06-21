@@ -151,6 +151,8 @@ async def _create_event_phase(
         data = download_data_from_public_bucket(f"lectures/{lecture_id}/events.json")
         events: EventList = EventList.model_validate_json(data.decode("utf-8"))
     else:
+        events: EventList = EventList(events=[])
+
         async def _extract_one(slide_no: int, audio_file: Path) -> list[Event]:
             first_speaker = (
                 speaker_left_right_map[result_script.scripts[slide_no].script[0].name]
