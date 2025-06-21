@@ -127,11 +127,14 @@ export const Player: React.FC<Props> = ({ manifest }) => {
   /* -------------------------------------------------------------
      Timeline hook (per page)
   ------------------------------------------------------------- */
-  const { reset: resetTimeline } = useTimeline(
+  const { reset: _resetTimeline } = useTimeline(
     slideReady && audioRef.current ? audioRef.current : null,
     eventsPages[pageIdx] ?? [],
     (ev: Event)=> playSignal(ev),
   );
+  const resetTimelineRef = useRef(_resetTimeline);
+  // _resetTimeline が変わるたびに中身だけ差し替える
+  useEffect(() => { resetTimelineRef.current = _resetTimeline; }, [_resetTimeline]);
 
   /* audio source swap on page change */
   useEffect(()=>{
@@ -139,12 +142,12 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     a.pause();
     a.src = manifest.audioUrls[pageIdx] ?? '';
     a.currentTime = 0;
-    resetTimeline();
+    resetTimelineRef.current();
     // Reset characters to idle when changing pages/resetting timeline
     charLeft.current?.setPose('idle');
     charRight.current?.setPose('idle');
     if (hasInteracted.current){ a.play().catch(()=>{}); }
-  },[pageIdx, resetTimeline, manifest.audioUrls]);
+  },[pageIdx, manifest.audioUrls]);
 
   /* auto‑advance when audio ends */
   useEffect(()=>{
@@ -201,7 +204,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
 
     // 通常の再生／再開
     if (audio.currentTime === 0) {
-      resetTimeline();
+      resetTimelineRef.current();
       charLeft.current?.setPose('idle');
       charRight.current?.setPose('idle');
     }
@@ -214,7 +217,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
       audioRef.current.currentTime = 0;
       hasInteracted.current=false;
       goTo(0);
-      resetTimeline();
+      resetTimelineRef.current();
       charLeft.current?.setPose('idle');
       charRight.current?.setPose('idle');
     }
@@ -229,20 +232,12 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     goTo(slideNum - 1); // convert 1-based to 0-based
     setJumpToSlide('');
   };
-  const handleQuizClose = useCallback((correct: boolean) => {
+  const handleQuizClose = useCallback(() => {
     setQuizOpen(null);
     charLeft.current?.setPose('idle');
     charRight.current?.setPose('idle');
-
-    if (correct) {
-      // ▶ 正解なら次ページへ
-      goTo(pageIdx + 1);
-      // audio は pageIdx が変わったあと useEffect で自動再生
-    } else {
-      // ▶ 不正解なら同じページを続行
-      audioRef.current?.play().catch(() => {});
-    }
-  }, [pageIdx, goTo]);
+    audioRef.current?.play().catch(() => {});
+  }, []);
 
   /* -------------------------------------------------------------
      Render
@@ -260,7 +255,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
       <canvas id="charLeft" ref={leftCanvasRef} style={{position:'absolute',bottom:0,left:'-4vw',width:'30vw',height:'30vw',pointerEvents:'none',zIndex:10}} />
       <canvas id="charRight" ref={rightCanvasRef} style={{position:'absolute',bottom:0,right:'-4vw',width:'30vw',height:'30vw',pointerEvents:'none',zIndex:10}} />
 
-      <audio ref={audioRef} preload="auto" />
+      <audio ref={audioRef} preload="auto" crossOrigin="anonymous" />
 
       {/* Integrated Controls - Slide Navigation + Playback */}
       <div style={{position:'absolute',top:10,right:10,zIndex:20,background:'rgba(255,255,255,0.9)',padding:'10px',borderRadius:'8px',display:'flex',alignItems:'center',gap:'12px'}}>
@@ -305,7 +300,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
           <button onClick={handleStop} style={{padding:'6px 10px',border:'1px solid #ccc',borderRadius:'4px',background:'#f8f9fa',fontSize:'16px',cursor:'pointer',color:'#333'}}>◼︎</button>
         </div>
       </div>
-      {quizOpen && (
+      {quizOpen !== null && (
         <QuizModal section={quizOpen} onClose={handleQuizClose} />
       )}
     </div>

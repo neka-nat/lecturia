@@ -7,7 +7,7 @@ export type QuizSection = { name: string; slide_no: number; quizzes: Quiz[] };
 
 interface Props {
   section: QuizSection;
-  onClose: (correct: boolean) => void;
+  onClose: () => void;
 }
 
 export const QuizModal: React.FC<Props> = ({ section, onClose }) => {
@@ -20,16 +20,26 @@ export const QuizModal: React.FC<Props> = ({ section, onClose }) => {
 
   const handleSelect = (idx: number) => {
     if (answered) return;
-    const correct = idx === quiz.answer_index;
+    const correct      = idx === quiz.answer_index;
+    const nextAnyWrong = anyWrong || !correct;
+
     setSelected(idx);
-    if (!correct) setAnyWrong(true);
+    setAnyWrong(nextAnyWrong);
 
     const isLast = curIdx === section.quizzes.length - 1;
+
     setTimeout(() => {
       if (isLast) {
-        onClose(!anyWrong && correct);
+        if (!nextAnyWrong) {
+          onClose();
+        } else {
+          setCurIdx(0);
+          setSelected(null);
+          setAnyWrong(false);
+        }
       } else {
-        setCurIdx((i) => i + 1);
+        // 次の設問へ
+        setCurIdx(i => i + 1);
         setSelected(null);
       }
     }, 1200);
