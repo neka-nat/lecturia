@@ -2,4 +2,7 @@ FROM node:20-alpine
 ARG FIREBASE_VERSION
 RUN apk add --no-cache openjdk17-jre && \
     npm i -g firebase-tools@$FIREBASE_VERSION
+
+COPY firebase/firebase.json /srv/firebase/firebase.json
+
 WORKDIR /srv/firebase

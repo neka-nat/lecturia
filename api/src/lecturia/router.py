@@ -13,8 +13,13 @@ from loguru import logger
 from pydantic import BaseModel
 
 from .models import Manifest, MovieConfig
-from .storage import delete_data_from_public_bucket, download_data_from_public_bucket, ls_public_bucket, is_exists_in_public_bucket
-from .firestore import TaskStatus, get_status, upsert_status
+from .storage import (
+    count_public_bucket,
+    delete_data_from_public_bucket,
+    download_data_from_public_bucket,
+    is_exists_in_public_bucket,
+)
+from .firestore import TaskStatus, get_all_active_status, get_status, upsert_status
 
 
 class LectureInfo(BaseModel):
@@ -22,7 +27,7 @@ class LectureInfo(BaseModel):
     topic: str
     detail: str | None = None
     created_at: str
-    status: Literal["completed", "failed", "running", "pending"] = "completed"
+    status: Literal["completed", "failed", "running", "pending", "deleted"] = "completed"
     progress_percentage: int | None = None
     current_phase: str | None = None
 
@@ -32,28 +37,17 @@ router = fastapi.APIRouter()
 
 @router.get("/lectures")
 async def list_lectures() -> list[LectureInfo]:
-    lectures = ls_public_bucket("lectures")
-    logger.info(f"Lectures: {lectures}")
     lecture_infos: list[LectureInfo] = []
-    for lecture_id in lectures:
+    status_list = get_all_active_status()
+    for task_status in status_list:
+        lecture_id = task_status.id
         # Determine lecture status
-        lecture_status = "completed"
-        created_at = ""
-        progress = None
-        phase = None
+        lecture_status = task_status.status
+        created_at = task_status.created_at.isoformat()
+        progress = task_status.progress_percentage
+        phase = task_status.current_phase
         has_events = is_exists_in_public_bucket(f"lectures/{lecture_id}/events.json")
-
-        # Check task status to determine if lecture failed
-        task_status = get_status(lecture_id)
-        if task_status:
-            created_at = task_status.created_at.isoformat()
-            if task_status.status == "failed":
-                lecture_status = "failed"
-            elif task_status.status in ["running", "pending"]:
-                lecture_status = task_status.status
-            progress = task_status.progress_percentage
-            phase = task_status.current_phase
-        elif not has_events:
+        if not has_events:
             logger.info(f"Find incomplete lecture without task status: {lecture_id}")
             lecture_status = "failed"
 
@@ -90,12 +84,13 @@ async def get_lecture_manifest(lecture_id: str) -> Manifest:
     if sprite_right_bytes:
         sprites["right"] = f"data:image/png;base64,{base64.b64encode(sprite_right_bytes).decode('utf-8')}"
 
+    audio_count = count_public_bucket(f"lectures/{lecture_id}/audio_")
     return Manifest(
         id=lecture_id,
-        title="test",
+        title=str(lecture_id),  # 現状使用してないので、仮で入れておく
         slide_url=f"/static/lectures/{lecture_id}/result_slide.html",
         quiz_url=f"/static/lectures/{lecture_id}/result_quiz.json",
-        audio_urls=[f"/static/lectures/{lecture_id}/audio_{i + 1}.mp3" for i in range(8)],
+        audio_urls=[f"/static/lectures/{lecture_id}/audio_{i + 1}.mp3" for i in range(audio_count)],
         events_url=f"/static/lectures/{lecture_id}/events.json",
         sprites=sprites,
         slide_width=1280,
@@ -164,4 +159,5 @@ async def regenerate_lecture(lecture_id: str):
 @router.delete("/lectures/{lecture_id}")
 async def delete_lecture(lecture_id: str):
     delete_data_from_public_bucket(f"lectures/{lecture_id}")
+    upsert_status(lecture_id, "deleted")
     return {"message": "Lecture deleted"}

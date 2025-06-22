@@ -21,7 +21,7 @@ else:
 configure(client, prefix="firedantic-test-")
 
 
-StatusType = Literal["not_started", "pending", "running", "completed", "failed"]
+StatusType = Literal["not_started", "pending", "running", "completed", "failed", "deleted"]
 
 
 class TaskStatus(Model):
@@ -44,6 +44,10 @@ def get_status(id: str) -> TaskStatus | None:
     except Exception as e:
         logger.info(f"Not found task status: {e}")
         return None
+
+
+def get_all_active_status() -> list[TaskStatus]:
+    return TaskStatus.find({"status": {"not-in": ["deleted"]}})
 
 
 def upsert_status(

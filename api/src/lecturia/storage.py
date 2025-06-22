@@ -49,6 +49,12 @@ def ls_public_bucket(prefix: str = "") -> list[str]:
     return list(directories)
 
 
+def count_public_bucket(prefix: str = "") -> int:
+    client = storage.Client()
+    blobs = client.list_blobs(_GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME, prefix=prefix)
+    return sum(1 for _ in blobs)
+
+
 def download_data_from_public_bucket(path: str) -> bytes | None:
     try:
         client = storage.Client()
