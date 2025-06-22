@@ -50,7 +50,10 @@ export function LectureCard({ lecture, index, onLectureClick, onDeleteLecture, o
       onClick={() => statusInfo.canPlay && onLectureClick(lecture.id)}
       style={{
         animationDelay: `${index * 100}ms`,
-        animation: 'slideInUp 0.6s ease-out forwards'
+        animationName:           'slideInUp',
+        animationDuration:       '0.6s',
+        animationTimingFunction: 'ease-out',
+        animationFillMode:       'forwards',
       }}
     >
       <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
