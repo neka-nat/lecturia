@@ -19,6 +19,31 @@ You can generate lectures by giving a topic and detailed content.
 * Animate characters talking on the slides.
 * On the lecture, there are quizzes to check the understanding of the audience.
 
-## Architecture
+## Quick Start (Local)
+
+First, launch the api server and seeder.
+
+```bash
+cd api
+cp .env.example .env
+# You need fill the following environment variables
+# - ANTHROPIC_API_KEY
+# - GOOGLE_API_KEY
+# - BRAVE_API_KEY
+# When you use Lecturia in local, you don't need to fill the Google Cloud's environment variables.
+docker compose up -d
+docker compose exec api python examples/seeder.py
+```
+
+Next, launch the frontend server.
+
+```bash
+cd frontend
+cp .env.example .env
+pnpm install
+pnpm dev
+```
+
+## Architecture (Google Cloud)
 
 ![Lecturia Architecture](assets/lecturia_arch.png)
