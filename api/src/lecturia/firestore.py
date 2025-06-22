@@ -68,7 +68,7 @@ def upsert_status(
     task_status.status = status
     task_status.error = error
     if progress_percentage is not None:
-        task_status.progress_percentage = progress_percentage
+        task_status.progress_percentage = max(0, min(progress_percentage, 100))
     if current_phase is not None:
         task_status.current_phase = current_phase
     task_status.updated_at = datetime.now(timezone.utc)

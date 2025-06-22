@@ -124,10 +124,16 @@ export function LectureCard({ lecture, index, onLectureClick, onDeleteLecture, o
             <span>{lecture.progress_percentage ?? 0}%</span>
           </div>
           <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-            <div
-              style={{width:`${lecture.progress_percentage ?? 0}%`}}
-              className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all"
-            />
+            {(() => {
+                 const raw = lecture.progress_percentage;
+                 const pct = Number.isFinite(raw) ? Math.min(Math.max(raw as number, 0), 100) : 0;
+                 return (
+                   <div
+                     style={{ width: `${pct}%` }}
+                     className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all"
+                   />
+                 );
+             })()}
           </div>
         </div>
       )}
