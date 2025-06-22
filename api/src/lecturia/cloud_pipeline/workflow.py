@@ -14,13 +14,20 @@ from ..chains.slide_to_script import Script, ScriptList, create_slide_to_script_
 from ..chains.tts import Talk, create_tts_chain
 from ..chains.event_extractor import create_event_extractor_chain
 from ..slide_editor import edit_slide
-from ..utils.media import remove_long_silence
+from ..utils.intervals import rewrite_talk_with_intervaltree
+from ..utils.media import remove_long_silence, detect_nonsilent_ranges
 from ..models import MovieConfig, EventList, Event, QuizSectionList
 from ..storage import is_exists_in_public_bucket, download_data_from_public_bucket, upload_data_to_public_bucket
 from ..firestore import upsert_status
 from ..utils.async_tools import gather_limited
 
 app = FastAPI()
+
+
+def _modify_events_by_check_silence(ev: EventList, audio_file: Path) -> EventList:
+    audio = AudioSegment.from_mp3(audio_file)
+    ranges = detect_nonsilent_ranges(audio)
+    return rewrite_talk_with_intervaltree(ev, ranges, ["right"])
 
 
 def _create_slide_phase(lecture_id: str, config: MovieConfig) -> HtmlSlide:
@@ -165,6 +172,9 @@ async def _create_event_phase(
                 audio_file,
                 first_speaker,
             )
+            # スピーカーが一人のときは、発話区間を調整
+            if len(speaker_left_right_map) == 1:
+                ev = _modify_events_by_check_silence(ev, audio_file)
             prev_sec = slide_page_event_sec[slide_no - 1] if slide_no > 0 else 0
             # 開始時刻をずらしたうえで返す
             adjusted = [

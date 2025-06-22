@@ -17,6 +17,8 @@ class Event(BaseModel):
         type: イベントの種類
         time_sec: イベントの発生時間（秒）
         name: イベントの名前
+            イベントがposeの場合はキャラクターの動作名("idle", "talk", "point")が入る
+            イベントがquiizの場合はクイズ名が入る
         target: イベントの対象となるキャラクター
     """
     type: Literal["start", "pose", "slideNext", "slidePrev", "slideStep", "sprite", "quiz", "end"]
