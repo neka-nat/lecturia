@@ -9,7 +9,7 @@ html, body, #__next {
 }
 
 body {
-  @apply bg-gray-900 text-white antialiased overflow-hidden;
+  @apply bg-gray-900 text-white antialiased;
 }
 
 body::-webkit-scrollbar { display: none; }
