@@ -156,6 +156,13 @@ async def regenerate_lecture(lecture_id: str):
     config = MovieConfig.model_validate_json(json_str)
 
     # Reset task status to pending
+    current_status = get_status(lecture_id)
+    if current_status is None:
+        raise fastapi.HTTPException(status_code=404, detail="Task not found")
+    if current_status.status == "completed":
+        raise fastapi.HTTPException(status_code=400, detail="Lecture is already completed")
+    if current_status.status in ("pending", "running"):
+        raise fastapi.HTTPException(status_code=400, detail="Lecture is already running")
     upsert_status(lecture_id, "pending")
     return await _create_lecture_task(lecture_id, config)
 
