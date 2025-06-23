@@ -18,6 +18,7 @@ from .storage import (
     delete_data_from_public_bucket,
     download_data_from_public_bucket,
     is_exists_in_public_bucket,
+    get_public_storage_url,
 )
 from .firestore import TaskStatus, get_all_active_status, get_status, upsert_status
 
@@ -90,7 +91,10 @@ async def get_lecture_manifest(lecture_id: str) -> Manifest:
         title=str(lecture_id),  # 現状使用してないので、仮で入れておく
         slide_url=f"/static/lectures/{lecture_id}/result_slide.html",
         quiz_url=f"/static/lectures/{lecture_id}/result_quiz.json",
-        audio_urls=[f"/static/lectures/{lecture_id}/audio_{i + 1}.mp3" for i in range(audio_count)],
+        audio_urls=[
+            get_public_storage_url(f"lectures/{lecture_id}/audio_{i + 1}.mp3")  # リダイレクトでOriginがnullになるので、storage.googleapis.com を直接指定
+            for i in range(audio_count)
+        ],
         events_url=f"/static/lectures/{lecture_id}/events.json",
         sprites=sprites,
         slide_width=1280,

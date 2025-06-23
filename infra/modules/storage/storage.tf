@@ -5,6 +5,10 @@ variable "public_read" {          # 読み取り公開／非公開フラグ
   type    = bool
   default = true
 }
+variable "cors_allowed_origins" {
+  type    = list(string)
+  default = []
+}
 variable "writer_sa_email" {
   type = string
 }
@@ -16,6 +20,12 @@ resource "google_storage_bucket" "public" {
   location      = var.primary_region
   uniform_bucket_level_access = true
   force_destroy = true          # ステージ環境なら true
+  cors {
+    origin          = var.cors_allowed_origins
+    method          = ["GET", "HEAD", "OPTIONS"]
+    response_header = ["Content-Type", "Content-Range", "Range"]
+    max_age_seconds = 3600
+  }
   depends_on    = [var.required_apis]
 }
 

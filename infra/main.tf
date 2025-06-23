@@ -17,13 +17,14 @@ module "artifact-registry" {
 }
 
 module "storage" {
-  source          = "./modules/storage"
-  gcp_project_id  = var.gcp_project_id
-  primary_region  = var.primary_region
-  bucket_name     = var.public_bucket_name
-  public_read     = true
-  required_apis   = module.required-api.required_apis
-  writer_sa_email = module.service_accounts.worker_sa_email
+  source               = "./modules/storage"
+  gcp_project_id       = var.gcp_project_id
+  primary_region       = var.primary_region
+  bucket_name          = var.public_bucket_name
+  public_read          = true
+  cors_allowed_origins = split(",", var.cors_allowed_origins)
+  required_apis        = module.required-api.required_apis
+  writer_sa_email      = module.service_accounts.worker_sa_email
 }
 
 module "secret_manager" {

@@ -7,6 +7,17 @@ from loguru import logger
 _GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME = os.environ["GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME"]
 
 
+def get_storage_url(bucket_name: str, path: str) -> str:
+    if "STORAGE_EMULATOR_HOST" in os.environ:
+        return f"http://{os.environ['STORAGE_EMULATOR_HOST']}/storage/v1/b/{bucket_name}/o/{path}?alt=media"
+    else:
+        return f"https://storage.googleapis.com/{bucket_name}/{path}"
+
+
+def get_public_storage_url(path: str) -> str:
+    return get_storage_url(_GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME, path)
+
+
 def upload_data(
     data: bytes | str,
     path: str,
@@ -17,10 +28,7 @@ def upload_data(
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(path)
     blob.upload_from_string(data, content_type=mime_type)
-    if "STORAGE_EMULATOR_HOST" in os.environ:
-        return f"http://{os.environ['STORAGE_EMULATOR_HOST']}/storage/v1/b/{bucket_name}/o/{path}?alt=media"
-    else:
-        return f"https://storage.googleapis.com/{bucket_name}/{path}"
+    return get_storage_url(bucket_name, path)
 
 
 def upload_data_to_public_bucket(
