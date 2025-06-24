@@ -48,8 +48,9 @@ async def list_lectures() -> list[LectureInfo]:
         progress = task_status.progress_percentage
         phase = task_status.current_phase
         has_events = is_exists_in_public_bucket(f"lectures/{lecture_id}/events.json")
-        if not has_events:
-            logger.info(f"Find incomplete lecture without task status: {lecture_id}")
+        if (task_status.status == "completed" and not has_events) \
+            or task_status.status not in ("pending", "running", "completed", "failed"):
+            logger.warning(f"Inconsistent lecture data: {lecture_id}")
             lecture_status = "failed"
 
         json_str = download_data_from_public_bucket(f"lectures/{lecture_id}/movie_config.json")

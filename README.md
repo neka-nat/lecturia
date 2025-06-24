@@ -32,7 +32,7 @@ cp .env.example .env
 # - BRAVE_API_KEY
 # When you use Lecturia in local, you don't need to fill the Google Cloud's environment variables.
 docker compose up -d
-docker compose exec api python examples/seeder.py
+docker compose exec lecturia python examples/seeder.py
 ```
 
 Next, launch the frontend server.
