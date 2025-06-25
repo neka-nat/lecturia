@@ -1,4 +1,4 @@
-import base64
+import os
 import uuid
 
 from bs4 import BeautifulSoup
@@ -33,7 +33,7 @@ def edit_slide(slide: HtmlSlide, use_refiner: bool = True) -> HtmlSlide:
             images = generator.invoke(alt)
             img_tag["src"] = uuid.uuid4().hex
             image_map[img_tag["src"]] = images[0]
-        elif src.startswith("searched-image"):
+        elif src.startswith("searched-image") and os.getenv("BRAVE_API_KEY"):
             logger.info(f"Searching image for {alt}")
             explorer = create_image_explorer_chain()
             images = explorer.invoke(alt.split(","))
