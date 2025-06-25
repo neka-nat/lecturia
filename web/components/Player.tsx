@@ -15,6 +15,7 @@ import { QuizModal } from '@/components/QuizModal';
 export type Manifest = {
   slideUrl: string;
   audioUrls: string[];        // page‑wise audios
+  quizSfxUrl: string;
   events: Event[];            // timeline (absolute)
   sprites: Record<'left'|'right', string>;
   slideWidth: number;
@@ -38,6 +39,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
   const leftCanvasRef  = useRef<HTMLCanvasElement>(null);
   const rightCanvasRef = useRef<HTMLCanvasElement>(null);
   const audioRef       = useRef<HTMLAudioElement>(null);
+  const quizSfxRef     = useRef<HTMLAudioElement>(null);
 
   const charLeft  = useRef<Character|null>(null);
   const charRight = useRef<Character|null>(null);
@@ -176,9 +178,29 @@ export const Player: React.FC<Props> = ({ manifest }) => {
         break;
       }
       case 'quiz': {       
-        audioRef.current?.pause();  // 講義音声ストップ
+        const lectureAudio = audioRef.current;
+        const sfx          = quizSfxRef.current;
+        if (!sfx) return;
+
+        // 講義音声を一時停止
+        lectureAudio?.pause();
+
+        // SFX 再生 → 終了後にモーダルを開く
         const section = manifest.quizSections.find(s => s.name === ev.name);
-        if (section) setQuizOpen(section);
+        const openModal = ()=>{ section && setQuizOpen(section); };
+
+        // Safari などの「一度タップが必要」対策
+        const playPromise = sfx.play();
+        if (playPromise !== undefined){
+          playPromise
+            .then(()=> {
+              // 再生が始まったら ended イベントでモーダル
+              sfx.addEventListener('ended', openModal, { once:true });
+            })
+            .catch(()=> openModal());
+        }else{
+          openModal();
+        }
         break;
       }
       default: break;
@@ -231,6 +253,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
     setJumpToSlide('');
   };
   const handleQuizClose = useCallback(() => {
+    quizSfxRef.current?.pause();
     setQuizOpen(null);
     audioRef.current?.play().catch(() => {});
   }, []);
@@ -252,6 +275,8 @@ export const Player: React.FC<Props> = ({ manifest }) => {
       <canvas id="charRight" ref={rightCanvasRef} style={{position:'absolute',bottom:0,right:'-4vw',width:'30vw',height:'30vw',pointerEvents:'none',zIndex:10}} />
 
       <audio ref={audioRef} preload="auto" crossOrigin="anonymous" />
+      {/* クイズ開始アナウンス SFX  */}
+      <audio ref={quizSfxRef} src={manifest.quizSfxUrl} preload="auto" crossOrigin="anonymous" />
 
       {/* Integrated Controls - Slide Navigation + Playback */}
       <div style={{position:'absolute',top:10,right:10,zIndex:20,background:'rgba(255,255,255,0.9)',padding:'10px',borderRadius:'8px',display:'flex',alignItems:'center',gap:'12px'}}>

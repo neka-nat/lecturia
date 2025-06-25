@@ -235,6 +235,12 @@ async def create_lecture(lecture_id: str, config: MovieConfig = Body(...)):
                 sprite_path = Path(__file__).parent.parent.resolve() / "html" / character.sprite_name
                 upload_data_to_public_bucket(sprite_path.read_bytes(), f"lectures/{lecture_id}/sprites/left.png", "image/png")
 
+        upload_data_to_public_bucket(
+            (Path(__file__).parent.parent.resolve() / "html" / f"quiz_{character.voice_type}.mp3").read_bytes(),
+            f"lectures/{lecture_id}/quiz.mp3",
+            "audio/mpeg",
+        )
+
         # Phase 1: Create slides (25% progress)
         upsert_status(lecture_id, "running", progress_percentage=10, current_phase="スライド生成中")
         result_slide = _create_slide_phase(lecture_id, config)

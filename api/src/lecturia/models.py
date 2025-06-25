@@ -95,6 +95,7 @@ class Manifest(BaseModel):
     slide_url: str
     quiz_url: str
     audio_urls: list[str]
+    quiz_sfx_url: str
     events_url: str
     sprites: dict[str, str]  # base64 encoded image
     slide_width: int

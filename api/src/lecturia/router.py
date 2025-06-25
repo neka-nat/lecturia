@@ -96,6 +96,7 @@ async def get_lecture_manifest(lecture_id: str) -> Manifest:
             get_public_storage_url(f"lectures/{lecture_id}/audio_{i + 1}.mp3")  # リダイレクトでOriginがnullになるので、storage.googleapis.com を直接指定
             for i in range(audio_count)
         ],
+        quiz_sfx_url=get_public_storage_url(f"lectures/{lecture_id}/quiz.mp3"),
         events_url=f"/static/lectures/{lecture_id}/events.json",
         sprites=sprites,
         slide_width=1280,
