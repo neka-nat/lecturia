@@ -44,7 +44,7 @@ async def list_lectures() -> list[LectureInfo]:
         lecture_id = task_status.id
         # Determine lecture status
         lecture_status = task_status.status
-        created_at = task_status.created_at.isoformat()
+        created_at = task_status.created_at.strftime("%Y-%m-%d %H:%M:%S")
         progress = task_status.progress_percentage
         phase = task_status.current_phase
         has_events = is_exists_in_public_bucket(f"lectures/{lecture_id}/events.json")
