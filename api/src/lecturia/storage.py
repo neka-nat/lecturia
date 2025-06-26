@@ -9,7 +9,7 @@ _GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME = os.environ["GOOGLE_CLOUD_STORAGE_PUBL
 
 def get_storage_url(bucket_name: str, path: str) -> str:
     if "STORAGE_EMULATOR_HOST" in os.environ:
-        return f"{os.environ['STORAGE_EMULATOR_HOST']}/storage/v1/b/{bucket_name}/o/{path}?alt=media"
+        return f"http://localhost:4443/storage/v1/b/{bucket_name}/o/{path}?alt=media"  # docker外からアクセスする場合は、localhost:4443 を指定する
     else:
         return f"https://storage.googleapis.com/{bucket_name}/{path}"
 
