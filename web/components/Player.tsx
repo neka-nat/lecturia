@@ -187,7 +187,11 @@ export const Player: React.FC<Props> = ({ manifest }) => {
 
         // SFX 再生 → 終了後にモーダルを開く
         const section = manifest.quizSections.find(s => s.name === ev.name);
-        const openModal = ()=>{ section && setQuizOpen(section); };
+        const openModal = ()=>{
+          if (section) {
+            setQuizOpen(section);
+          }
+        };
 
         // Safari などの「一度タップが必要」対策
         const playPromise = sfx.play();
