@@ -1,0 +1,22 @@
+{
+  "slideUrl": "/lectures/demo/result_slide.html",
+  "audioUrls": [
+    "/lectures/demo/audio_1.mp3",
+    "/lectures/demo/audio_2.mp3",
+    "/lectures/demo/audio_3.mp3",
+    "/lectures/demo/audio_4.mp3",
+    "/lectures/demo/audio_5.mp3",
+    "/lectures/demo/audio_6.mp3",
+    "/lectures/demo/audio_7.mp3",
+    "/lectures/demo/audio_8.mp3"
+  ],
+  "quizSfxUrl": "/lectures/demo/quiz.mp3",
+  "events": [],
+  "quizSections": [],
+  "sprites": {
+    "right": "/lectures/demo/sprites/right.png",
+    "left":  ""
+  },
+  "slideWidth": 1280,
+  "slideHeight": 720
+}

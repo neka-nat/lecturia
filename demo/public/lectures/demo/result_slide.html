@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ja">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   ニュートンの万有引力の法則
+  </title>
+  <style>
+   * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .slide-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .slide {
+            display: none;
+            width: 100%;
+            height: 100%;
+            padding: 3em 2em 5em 2em;
+            color: white;
+            text-align: center;
+            position: relative;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .page-number {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 1.1em;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            font-size: clamp(2.5em, 5vw, 4em);
+            margin-bottom: 0.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            font-weight: 700;
+        }
+        
+        h2 {
+            font-size: clamp(1.8em, 4vw, 3em);
+            margin-bottom: 1em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            font-weight: 600;
+        }
+        
+        h3 {
+            font-size: clamp(1.4em, 3vw, 2.2em);
+            margin-bottom: 0.5em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            font-weight: 600;
+        }
+        
+        p {
+            font-size: clamp(1.1em, 2.5vw, 1.6em);
+            line-height: 1.6;
+            margin-bottom: 1em;
+            max-width: 85%;
+            font-weight: 400;
+        }
+        
+        .apple {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #ff4444, #cc3333);
+            border-radius: 50%;
+            position: relative;
+            margin: 20px auto;
+            animation: bounce 2s infinite ease-in-out;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .apple::before {
+            content: '';
+            width: 12px;
+            height: 18px;
+            background: linear-gradient(to bottom, #228B22, #1e7d1e);
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 6px;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes fall {
+            from { transform: translateY(-200px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .step {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+            margin-bottom: 0.8em;
+        }
+        
+        .step.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .earth-moon {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 100px;
+            margin: 2em 0;
+            height: 150px;
+        }
+        
+        .earth {
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle at 30% 30%, #4CAF50, #2E7D32);
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.4);
+        }
+        
+        .moon {
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle at 30% 30%, #E0E0E0, #BDBDBD);
+            border-radius: 50%;
+            animation: orbit 4s linear infinite;
+            box-shadow: 0 0 10px rgba(224, 224, 224, 0.4);
+        }
+        
+        @keyframes orbit {
+            from { transform: rotate(0deg) translateX(80px) rotate(0deg); }
+            to { transform: rotate(360deg) translateX(80px) rotate(-360deg); }
+        }
+        
+        .solar-system {
+            width: 100%;
+            height: 350px;
+            position: relative;
+            margin: 2em 0;
+        }
+        
+        .sun {
+            width: 70px;
+            height: 70px;
+            background: radial-gradient(circle, #FFD700, #FFA500);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: glow 2s ease-in-out infinite alternate;
+            z-index: 10;
+        }
+        
+        @keyframes glow {
+            from { box-shadow: 0 0 20px #FFD700; }
+            to { box-shadow: 0 0 40px #FFD700, 0 0 60px #FFD700; }
+        }
+        
+        .planet {
+            position: absolute;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+        }
+        
+        .mercury { 
+            width: 10px; 
+            height: 10px; 
+            background: radial-gradient(circle, #8C7853, #6b5d42); 
+            animation: orbit-mercury 2s linear infinite; 
+        }
+        
+        .venus { 
+            width: 14px; 
+            height: 14px; 
+            background: radial-gradient(circle, #FFC649, #e6b041); 
+            animation: orbit-venus 3s linear infinite; 
+        }
+        
+        .earth-planet { 
+            width: 16px; 
+            height: 16px; 
+            background: radial-gradient(circle, #6B93D6, #4a6bb3); 
+            animation: orbit-earth 4s linear infinite; 
+        }
+        
+        .mars { 
+            width: 12px; 
+            height: 12px; 
+            background: radial-gradient(circle, #CD5C5C, #a04848); 
+            animation: orbit-mars 5s linear infinite; 
+        }
+        
+        @keyframes orbit-mercury {
+            from { transform: translate(-50%, -50%) rotate(0deg) translateX(90px) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg) translateX(90px) rotate(-360deg); }
+        }
+        
+        @keyframes orbit-venus {
+            from { transform: translate(-50%, -50%) rotate(0deg) translateX(110px) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg) translateX(110px) rotate(-360deg); }
+        }
+        
+        @keyframes orbit-earth {
+            from { transform: translate(-50%, -50%) rotate(0deg) translateX(130px) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg) translateX(130px) rotate(-360deg); }
+        }
+        
+        @keyframes orbit-mars {
+            from { transform: translate(-50%, -50%) rotate(0deg) translateX(150px) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg) translateX(150px) rotate(-360deg); }
+        }
+        
+        .force-arrow {
+            width: 4px;
+            height: 60px;
+            background: linear-gradient(to bottom, #FFD700, #FFA500);
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .force-arrow::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 15px solid #FFD700;
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .newton-portrait {
+            width: 180px;
+            height: 220px;
+            border-radius: 15px;
+            margin: 20px auto;
+            background: #f0f0f0;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+        }
+        
+        .gravity-demo {
+            margin: 2em 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .gravity-demo svg {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        .earth-gravity-demo {
+            position: relative;
+            display: inline-block;
+            margin: 2em 0;
+        }
+        
+        .earth-gravity-demo svg {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 10px;
+        }
+        
+        .objects-demo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            margin: 2em 0;
+        }
+        
+        .demo-object {
+            text-align: center;
+        }
+        
+        .demo-object div {
+            width: 70px;
+            height: 70px;
+            border-radius: 15px;
+            margin: 0 auto 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .demo-arrow {
+            align-self: center;
+            font-size: 2em;
+            color: #FFD700;
+            text-shadow: 0 0 10px #FFD700;
+        }
+        
+        .summary-points {
+            text-align: left;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .summary-points .step {
+            font-size: clamp(1.2em, 2.8vw, 1.8em);
+            margin-bottom: 0.8em;
+            padding: 0.5em;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .highlight-box {
+            background: rgba(255, 215, 0, 0.2);
+            border: 2px solid #FFD700;
+            border-radius: 15px;
+            padding: 1.5em;
+            margin: 1.5em 0;
+            backdrop-filter: blur(10px);
+        }
+  </style>
+ </head>
+ <body>
+  <div class="slide-container">
+   <!-- スライド1: タイトル -->
+   <div class="slide active">
+    <h1>
+     🍎 ニュートンの万有引力の法則 🌟
+    </h1>
+    <div class="apple">
+    </div>
+    <p class="step">
+     みんなで宇宙の不思議を探検しよう！
+    </p>
+    <div class="page-number">
+     1/8
+    </div>
+   </div>
+   <!-- スライド2: ニュートンとりんご -->
+   <div class="slide">
+    <h2>
+     🧙‍♂️ アイザック・ニュートンって誰？
+    </h2>
+    <div class="newton-portrait">
+     🧑‍🔬
+    </div>
+    <p class="step">
+     300年以上前のイギリスの科学者だよ
+    </p>
+    <p class="step">
+     🍎 りんごが木から落ちるのを見て「なぜ下に落ちるんだろう？」と考えたんだ
+    </p>
+    <p class="step">
+     ✨ そして宇宙の大発見をしたよ！
+    </p>
+    <div class="page-number">
+     2/8
+    </div>
+   </div>
+   <!-- スライド3: 万有引力って何？ -->
+   <div class="slide">
+    <h2>
+     🌍 万有引力って何だろう？
+    </h2>
+    <p class="step">
+     すべてのものには「引っ張る力」があるんだ！
+    </p>
+    <div class="step gravity-demo">
+     <svg height="200" viewbox="0 0 350 200" width="350">
+      <circle cx="100" cy="100" fill="#4CAF50" opacity="0.8" r="40">
+      </circle>
+      <circle cx="250" cy="100" fill="#2196F3" opacity="0.8" r="20">
+      </circle>
+      <path d="M 140 100 L 210 100" marker-end="url(#arrowhead)" stroke="#FFD700" stroke-width="4">
+      </path>
+      <path d="M 210 100 L 140 100" marker-end="url(#arrowhead)" stroke="#FFD700" stroke-width="4">
+      </path>
+      <defs>
+       <marker id="arrowhead" markerheight="8" markerwidth="12" orient="auto" refx="10" refy="4">
+        <polygon fill="#FFD700" points="0 0, 12 4, 0 8">
+        </polygon>
+       </marker>
+      </defs>
+      <text fill="white" font-size="16" font-weight="bold" text-anchor="middle" x="100" y="170">
+       大きいもの
+      </text>
+      <text fill="white" font-size="16" font-weight="bold" text-anchor="middle" x="250" y="170">
+       小さいもの
+      </text>
+     </svg>
+    </div>
+    <p class="step">
+     🤝 お互いに引っ張り合っているよ！
+    </p>
+    <div class="page-number">
+     3/8
+    </div>
+   </div>
+   <!-- スライド4: 地球の引力 -->
+   <div class="slide">
+    <h2>
+     🌍 地球はとっても強い引力を持っている！
+    </h2>
+    <div class="step earth-gravity-demo">
+     <svg height="250" viewbox="0 0 250 250" width="250">
+      <circle cx="125" cy="125" fill="url(#earthGradient)" r="80">
+      </circle>
+      <defs>
+       <radialgradient id="earthGradient">
+        <stop offset="0%" stop-color="#4CAF50">
+        </stop>
+        <stop offset="100%" stop-color="#2E7D32">
+        </stop>
+       </radialgradient>
+      </defs>
+     </svg>
+     <div class="apple" style="position: absolute; top: -60px; left: 50%; transform: translateX(-50%); animation: fall 2s ease-in infinite;">
+     </div>
+    </div>
+    <p class="step">
+     だから りんごも 僕たちも 地面に落ちるんだね！
+    </p>
+    <p class="step">
+     🏃‍♂️ ジャンプしても戻ってくるのも地球の引力のおかげ
+    </p>
+    <div class="page-number">
+     4/8
+    </div>
+   </div>
+   <!-- スライド5: 月と地球 -->
+   <div class="slide">
+    <h2>
+     🌙 月が地球の周りを回る理由
+    </h2>
+    <div class="step">
+     <div class="earth-moon">
+      <div class="earth">
+      </div>
+      <div class="moon">
+      </div>
+     </div>
+    </div>
+    <p class="step">
+     地球が月を引っ張っているから、月は地球の周りを回るんだ！
+    </p>
+    <p class="step">
+     🎯 でも月も地球を引っ張り返している
+    </p>
+    <p class="step">
+     🌊 だから海に潮の満ち引きがあるよ
+    </p>
+    <div class="page-number">
+     5/8
+    </div>
+   </div>
+   <!-- スライド6: 太陽系 -->
+   <div class="slide">
+    <h2>
+     ☀️ 太陽系も万有引力で動いている！
+    </h2>
+    <div class="step">
+     <div class="solar-system">
+      <div class="sun">
+      </div>
+      <div class="planet mercury">
+      </div>
+      <div class="planet venus">
+      </div>
+      <div class="planet earth-planet">
+      </div>
+      <div class="planet mars">
+      </div>
+     </div>
+    </div>
+    <p class="step">
+     太陽の強い引力が惑星たちを引っ張っている
+    </p>
+    <p class="step">
+     🪐 だから地球も他の惑星も太陽の周りを回るんだ！
+    </p>
+    <div class="page-number">
+     6/8
+    </div>
+   </div>
+   <!-- スライド7: 身の回りの万有引力 -->
+   <div class="slide">
+    <h2>
+     🏠 身の回りにも万有引力がある！
+    </h2>
+    <div class="step">
+     <p>
+      📚 本と本も引っ張り合っている
+     </p>
+     <p>
+      👫 君と友達も引っ張り合っている
+     </p>
+     <p>
+      🐕 犬と猫も引っ張り合っている
+     </p>
+    </div>
+    <div class="step">
+     <div class="highlight-box">
+      <p style="font-size: 1.2em; color: #FFD700; margin-bottom: 1em;">
+       でも力がとても小さいから感じられないんだ
+      </p>
+      <div class="objects-demo">
+       <div class="demo-object">
+        <div style="background: linear-gradient(135deg, #FF5722, #d84315);">
+        </div>
+        <p style="font-size: 0.9em;">
+         本
+        </p>
+       </div>
+       <div class="demo-arrow">
+        ↔️
+       </div>
+       <div class="demo-object">
+        <div style="background: linear-gradient(135deg, #2196F3, #1565c0);">
+        </div>
+        <p style="font-size: 0.9em;">
+         本
+        </p>
+       </div>
+      </div>
+     </div>
+    </div>
+    <div class="page-number">
+     7/8
+    </div>
+   </div>
+   <!-- スライド8: まとめ -->
+   <div class="slide">
+    <h2>
+     🎉 万有引力の法則まとめ
+    </h2>
+    <div class="summary-points">
+     <div class="step">
+      <p>
+       ✨ すべてのものには引力がある
+      </p>
+     </div>
+     <div class="step">
+      <p>
+       🌍 重いものほど引力が強い
+      </p>
+     </div>
+     <div class="step">
+      <p>
+       📏 近いものほど引力が強い
+      </p>
+     </div>
+     <div class="step">
+      <p>
+       🌌 宇宙のすべてが引っ張り合っている
+      </p>
+     </div>
+    </div>
+    <div class="step highlight-box">
+     <h3 style="color: #FFD700;">
+      これがニュートンの大発見！
+     </h3>
+     <p>
+      宇宙の動きがすべて説明できるようになったんだ 🚀
+     </p>
+    </div>
+    <div class="page-number">
+     8/8
+    </div>
+   </div>
+  </div>
+  <script>
+   let currentSlide = 0;
+        let currentStep = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function showSlide(n) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            currentSlide = n;
+            if (currentSlide >= totalSlides) currentSlide = 0;
+            if (currentSlide < 0) currentSlide = totalSlides - 1;
+            slides[currentSlide].classList.add('active');
+            
+            // Reset steps for new slide
+            currentStep = 0;
+            const steps = slides[currentSlide].querySelectorAll('.step');
+            steps.forEach(step => step.classList.remove('show'));
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        function slideNextStep() {
+            const steps = slides[currentSlide].querySelectorAll('.step');
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('show');
+                currentStep++;
+            }
+        }
+
+        // Initialize first slide
+        showSlide(0);
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    slideNextStep();
+                    break;
+                case 'ArrowLeft':
+                    prevSlide();
+                    break;
+                case 'ArrowDown':
+                    nextSlide();
+                    break;
+                case 'ArrowUp':
+                    prevSlide();
+                    break;
+            }
+        });
+
+        // PostMessage API
+        window.addEventListener('message', (ev) => {
+            switch (ev.data) {
+                case 'slide-next': 
+                    nextSlide(); 
+                    break;
+                case 'slide-prev': 
+                    prevSlide(); 
+                    break;
+                case 'slide-step': 
+                    slideNextStep(); 
+                    break;
+            }
+        });
+  </script>
+ </body>
+</html>
