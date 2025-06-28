@@ -24,9 +24,9 @@ export function LectureCard({ lecture, index, onLectureClick, onDeleteLecture, o
       case 'running':
       case 'pending':
         return {
-          icon: null,
+          icon: <Loader2 className="w-4 h-4 animate-spin" />,
           label: '生成中',
-          color: 'from-blue-100 …',
+          color: 'from-blue-100 to-blue-100 text-blue-700 border-blue-200',
           bgColor: 'bg-blue-500',
           canPlay: false,
         };
