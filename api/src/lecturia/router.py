@@ -57,8 +57,8 @@ async def list_lectures() -> list[LectureInfo]:
         if json_str is None:
             lecture_infos.append(LectureInfo(
                 id=lecture_id,
-                topic="<無題>",
-                detail="無し",
+                topic="待機中..." if lecture_status == "pending" else "無題",
+                detail="待機中..." if lecture_status == "pending" else "",
                 created_at="",
                 status=lecture_status,
             ))
