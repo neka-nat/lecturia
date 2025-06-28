@@ -11,6 +11,9 @@ You can generate lectures by giving a topic and detailed content.
 
 ![home](assets/home.png)
 
+### Sample lecture demo
+https://lecturia.vercel.app/
+
 ## Features
 
 * Generate lecture slides by giving a topic and detailed content.
