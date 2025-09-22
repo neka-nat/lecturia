@@ -29,7 +29,7 @@ resource "google_artifact_registry_repository" "lecturia_container_registry" {
 
 resource "null_resource" "submit" {
   provisioner "local-exec" {
-    command = "gcloud builds submit --tag ${local.image_uri} ${path.module}/../../../api"
+    command = "gcloud builds submit --tag ${local.image_uri} --project ${var.gcp_project_id} ${path.module}/../../../api"
   }
 }
 
