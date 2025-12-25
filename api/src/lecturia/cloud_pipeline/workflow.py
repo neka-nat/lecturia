@@ -178,7 +178,13 @@ async def _create_event_phase(
             prev_sec = slide_page_event_sec[slide_no - 1] if slide_no > 0 else 0
             # 開始時刻をずらしたうえで返す
             adjusted = [
-                Event(type=e.type, time_sec=prev_sec + e.time_sec, name=e.name, target=e.target)
+                Event(
+                    type=e.type,
+                    time_sec=prev_sec + e.time_sec,
+                    name=e.name,
+                    target=e.target,
+                    id=e.id,
+                )
                 for e in ev.events
             ] + [
                 Event(type="slideNext", time_sec=slide_page_event_sec[slide_no])

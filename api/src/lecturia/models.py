@@ -18,13 +18,25 @@ class Event(BaseModel):
         time_sec: イベントの発生時間（秒）
         name: イベントの名前
             イベントがposeの場合はキャラクターの動作名("idle", "talk", "point")が入る
-            イベントがquiizの場合はクイズ名が入る
+            イベントがquizの場合はクイズ名が入る
         target: イベントの対象となるキャラクター
+        id: elementClickイベントでクリック対象の要素ID
     """
-    type: Literal["start", "pose", "slideNext", "slidePrev", "slideStep", "sprite", "quiz", "end"]
+    type: Literal[
+        "start",
+        "pose",
+        "slideNext",
+        "slidePrev",
+        "slideStep",
+        "elementClick",
+        "sprite",
+        "quiz",
+        "end",
+    ]
     time_sec: float
     name: str | None = None
     target: Literal["left", "right"] | None = None   # イベントの対象となるキャラクター
+    id: str | None = None
 
 
 class Quiz(BaseModel):

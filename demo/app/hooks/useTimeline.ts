@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
 
 export type Event = {
-  type: 'slideNext' | 'slidePrev' | 'slideStep' | 'pose' | 'sprite' | 'quiz';
+  type: 'slideNext' | 'slidePrev' | 'slideStep' | 'elementClick' | 'pose' | 'sprite' | 'quiz';
   time_sec: number;
   name?: string | null;
   target?: 'left' | 'right' | null;
+  id?: string | null;
 };
 
 export const useTimeline = (

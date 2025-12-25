@@ -20,7 +20,7 @@ class PlayConfig(BaseModel):
 
 async def play_slide(html_content: str, output_dir: Path, config: PlayConfig) -> list[Path]:
     fps = config.fps
-    event_durations_sec: list[tuple[str, float, str]] = []
+    event_durations_sec: list[tuple[str, float, str | None, str | None, str | None]] = []
     for prev_event, next_event in zip(
         [Event(type="start", time_sec=0)] + config.events.events[:-1],
         config.events.events,
@@ -31,6 +31,7 @@ async def play_slide(html_content: str, output_dir: Path, config: PlayConfig) ->
                 next_event.time_sec - prev_event.time_sec,
                 next_event.name,
                 next_event.target,
+                next_event.id,
             )
         )
 
@@ -57,9 +58,9 @@ async def play_slide(html_content: str, output_dir: Path, config: PlayConfig) ->
 
 
         frames: list[Path] = []
-        total_frames = int(sum(event_duration for _, event_duration, _, _ in event_durations_sec) * fps)
+        total_frames = int(sum(event_duration for _, event_duration, _, _, _ in event_durations_sec) * fps)
         with tqdm(total=total_frames, desc="Generating frames") as pbar:
-            for event_index, (event_type, event_duration, event_name, event_target) in enumerate(event_durations_sec):
+            for event_index, (event_type, event_duration, event_name, event_target, event_id) in enumerate(event_durations_sec):
                 num_frames = int(event_duration * fps)
                 for frame_index in range(num_frames):
                     frame_path = output_dir / f"{event_index:03d}_{frame_index:05d}.png"
@@ -74,6 +75,7 @@ async def play_slide(html_content: str, output_dir: Path, config: PlayConfig) ->
                             "type": event_type,
                             "name": event_name,
                             "target": event_target,
+                            "id": event_id,
                         },
                     )
                     await asyncio.sleep(0.1)

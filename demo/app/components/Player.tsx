@@ -53,7 +53,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
   /* -------------------------------------------------------------
      Helper: postMessage to iframe
   ------------------------------------------------------------- */
-  const postToSlide = useCallback((msg:string)=>{
+  const postToSlide = useCallback((msg: string | { type: string; id?: string })=>{
     iframeRef.current?.contentWindow?.postMessage(msg,'*');
   },[]);
 
@@ -167,6 +167,14 @@ export const Player: React.FC<Props> = ({ manifest }) => {
       case 'slideNext': goTo(pageIdx+1); break;
       case 'slidePrev': goTo(pageIdx-1); break;
       case 'slideStep': postToSlide('slide-step'); break;
+      case 'elementClick': {
+        if (ev.id) {
+          postToSlide({ type: 'element-click', id: ev.id });
+        } else {
+          postToSlide('element-click');
+        }
+        break;
+      }
       case 'pose':{
         const actor = ev.target==='left' ? charLeft.current : charRight.current;
         actor?.setPose((ev.name)||'idle');

@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain_core.runnables import Runnable
-from langchain.schema import SystemMessage, AIMessage
+from langchain.messages import SystemMessage, AIMessage
 from pydantic import BaseModel, Field, ConfigDict
 from PIL import Image
 
@@ -58,15 +58,20 @@ _prompt_template = """
 | slide-next     | 次のスライドへ |
 | slide-prev     | 前のスライドへ |
 | slide-step     | アニメーションなどのステップを進める |
+| element-click  | スライド内の指定した要素をクリックしたときに発火する。要素は`id`で指定する。 |
 
 scriptとしては以下のようなものを挿入してください。
 ```html
 <script>
   window.addEventListener('message', (ev) => {{
-    switch (ev.data) {{
+    const data = ev.data;
+    const type = (typeof data === 'string') ? data : data?.type;
+    const elementId = (typeof data === 'object' && data) ? (data.id ?? data.detail?.id) : undefined;
+    switch (type) {{
       case 'slide-next': nextSlide(); break;
       case 'slide-prev': prevSlide(); break;
       case 'slide-step': slideNextStep(); break;
+      case 'element-click': handleElementClick(elementId); break;
     }}
   }});
 </script>
@@ -96,6 +101,7 @@ scriptとしては以下のようなものを挿入してください。
   - 複雑な写真や絵画のようなものは`<img>`タグを挿入し、`src`に"generated-image"と記述し、画像の説明を`alt`に入れてください。
   - 実在する人物や商品、地域などの写真を挿入したい場合は、`<img>`タグを挿入し、`src`に"searched-image"と記述し、画像の検索クエリ(複数の場合はカンマ区切り)を`alt`に入れてください。
   - 数学的なアニメーションはスライド内に`<canvas>`や`<svg>`を挿入し、MathBoxなどを使用して作成してください。
+  - さらにスライド内にクリックによって変化する要素を入れることで、インタラクティブなアニメーションの作成も検討してみてください。
 {extra_rules}
 
 ## スライドの内容

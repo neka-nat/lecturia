@@ -24,6 +24,7 @@ _prompt = """
 
 ```json
 {{"type": "slideStep"}}  # スライド内のアニメーションを1ステップ進めるためのイベント
+{{"type": "elementClick", "id": "element-id"}}  # スライド内の指定した要素をクリックしたときに発火するイベント。要素は`id`で指定する。
 {{"type": "pose", "name": "idle"}}  # キャラクターアニメーションをアイドル状態にするイベント
 {{"type": "pose", "name": "talk"}}  # キャラクターアニメーションを話している状態にするイベント
 {{"type": "pose", "name": "point"}}  # キャラクターアニメーションが強調を表現している状態にするイベント
@@ -59,6 +60,7 @@ def output_format_prompt(multiple_speakers: bool) -> str:
     {{"type": "slideStep", "time_sec": 10.5}},
     {{"type": "pose", "name": "talk", "time_sec": 15.0, "target": "right"}},
     {{"type": "slideStep", "time_sec": 20.5}},
+    {{"type": "elementClick", "id": "element-id", "time_sec": 23.0}},
     {{"type": "pose", "name": "talk", "time_sec": 25.0, "target": "left"}},
     ...
   ]
@@ -70,6 +72,7 @@ def output_format_prompt(multiple_speakers: bool) -> str:
     {{"type": "slideStep", "time_sec": 10.5}},
     {{"type": "pose", "name": "talk", "time_sec": 15.0}},
     {{"type": "slideStep", "time_sec": 20.5}},
+    {{"type": "elementClick", "id": "element-id", "time_sec": 23.0}},
     ...
   ]
 }}"""

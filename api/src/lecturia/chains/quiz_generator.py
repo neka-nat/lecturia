@@ -5,7 +5,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_google_vertexai import ChatVertexAI
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain_core.runnables import Runnable
-from langchain.schema import SystemMessage, AIMessage
+from langchain.messages import SystemMessage, AIMessage
 
 from ..models import QuizSectionList
 from ..utils.ai_models import AI_MODELS
@@ -88,7 +88,13 @@ def create_quiz_generator_chain() -> Runnable:
 
     def parse(ai_message: AIMessage) -> QuizSectionList:
         """Parse the AI message."""
-        text = ai_message.content
+        if isinstance(ai_message.content, list):
+            if isinstance(ai_message.content[0], dict):
+                text = ai_message.content[0]["text"]
+            else:
+                text = ai_message.content[0]
+        else:
+            text = ai_message.content
         json_str = re.search(r"```json\n(.*)\n```", text, re.DOTALL).group(1)
         return QuizSectionList.model_validate_json(json_str)
 

@@ -120,7 +120,13 @@ async def create_movie(config: MovieConfig, work_dir: Path | None = None) -> Pat
             prev_sec = slide_page_event_sec[slide_no - 1] if slide_no > 0 else 0
             events.events.extend(
                 [
-                    Event(type=event.type, time_sec=prev_sec + event.time_sec, name=event.name, target=event.target)
+                    Event(
+                        type=event.type,
+                        time_sec=prev_sec + event.time_sec,
+                        name=event.name,
+                        target=event.target,
+                        id=event.id,
+                    )
                     for event in events_anim.events
                 ]
             )

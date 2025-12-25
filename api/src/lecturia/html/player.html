@@ -110,6 +110,9 @@ window.playSignal = async ({type, target='right', ...p})=>{
     case 'slideNext': slideWin.postMessage('slide-next','*'); break;
     case 'slidePrev': slideWin.postMessage('slide-prev','*'); break;
     case 'slideStep': slideWin.postMessage('slide-step','*'); break;
+    case 'elementClick':
+      slideWin.postMessage({ type: 'element-click', id: p.id }, '*');
+      break;
 
     case 'pose':    actor.curPose = p.name || 'idle'; break;
     case 'sprite':  await actor.setSprite(p.src);     break;

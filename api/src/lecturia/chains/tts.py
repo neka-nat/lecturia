@@ -56,7 +56,7 @@ class Talk(BaseModel):
 
 class TTS(Runnable):
     def __init__(self):
-        self.client = GoogleTTSClient()
+        self.client = GoogleTTSClient(model="gemini-2.5-pro-preview-tts")
 
     def invoke(self, text: str, voice_type: VoiceTypes | None = None) -> TextToAudioResponse:
         voice_type = voice_type or "woman"
