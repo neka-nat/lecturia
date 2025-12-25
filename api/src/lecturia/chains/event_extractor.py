@@ -9,6 +9,7 @@ from google.genai.types import Part
 from langchain_core.runnables import Runnable
 
 from ..models import EventList
+from ..utils.ai_models import AI_MODELS
 
 
 _prompt = """
@@ -84,7 +85,7 @@ class EventExtractor(Runnable):
             )
         else:
             self.client = genai.Client()
-        self.model = "gemini-2.5-flash-preview-05-20"
+        self.model = AI_MODELS["gemini-default"]
 
     def invoke(
         self,

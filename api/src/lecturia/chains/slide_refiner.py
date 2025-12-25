@@ -6,6 +6,7 @@ from langchain_core.runnables import Runnable
 from langchain.schema import SystemMessage, AIMessage
 
 from .slide_maker import HtmlSlide
+from ..utils.ai_models import AI_MODELS
 
 
 _prompt_template = """
@@ -35,7 +36,7 @@ def create_slide_refiner_chain() -> Runnable:
         ]
     )
     llm = ChatAnthropic(
-        model="claude-sonnet-4-20250514",
+        model=AI_MODELS["claude-default"],
         max_tokens=64000,
     )
 

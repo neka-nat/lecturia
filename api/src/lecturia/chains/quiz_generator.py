@@ -8,6 +8,7 @@ from langchain_core.runnables import Runnable
 from langchain.schema import SystemMessage, AIMessage
 
 from ..models import QuizSectionList
+from ..utils.ai_models import AI_MODELS
 
 
 _prompt_template = """
@@ -76,12 +77,12 @@ def create_quiz_generator_chain() -> Runnable:
     prompt = ChatPromptTemplate(messages=prompt_msgs)
     if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ or "K_SERVICE" in os.environ:
         llm = ChatVertexAI(
-            model="gemini-2.5-flash-preview-05-20",
+            model=AI_MODELS["gemini-default"],
             max_tokens=65536,
         )
     else:
         llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash-preview-05-20",
+            model=AI_MODELS["gemini-default"],
             max_tokens=65536,
         )
 

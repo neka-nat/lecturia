@@ -7,6 +7,8 @@ from langchain.schema import SystemMessage, AIMessage
 from loguru import logger
 from pydantic import BaseModel, Field
 
+from ..utils.ai_models import AI_MODELS
+
 
 class Speaker(BaseModel):
     name: str = Field(default="", description="スライドの台本の発話者の名前")
@@ -152,7 +154,7 @@ def create_slide_to_script_chain(speakers: list[Speaker], use_web_search: bool =
     ]
     prompt = ChatPromptTemplate(messages=prompt_msgs)
     llm = ChatAnthropic(
-        model="claude-sonnet-4-20250514",
+        model=AI_MODELS["claude-default"],
         max_tokens=64000,
         thinking={"type": "enabled", "budget_tokens": 4096},
     )

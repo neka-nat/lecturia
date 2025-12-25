@@ -11,6 +11,8 @@ from langchain.schema import SystemMessage, AIMessage
 from pydantic import BaseModel, Field, ConfigDict
 from PIL import Image
 
+from ..utils.ai_models import AI_MODELS
+
 
 class HtmlSlide(BaseModel):
     html: str = Field(description="スライドのhtml形式の文字列")
@@ -114,7 +116,7 @@ def create_slide_maker_chain(use_web_search: bool = True, num_max_web_search: in
     ]
     prompt = ChatPromptTemplate(messages=prompt_msgs)
     llm = ChatAnthropic(
-        model="claude-sonnet-4-20250514",
+        model=AI_MODELS["claude-default"],
         max_tokens=64000,
         thinking={"type": "enabled", "budget_tokens": 4096},
     )
