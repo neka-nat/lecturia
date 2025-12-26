@@ -167,8 +167,7 @@ export const Player: React.FC<Props> = ({ manifest }) => {
       case 'slideNext': goTo(pageIdx+1); break;
       case 'slidePrev': goTo(pageIdx-1); break;
       case 'slideStep': postToSlide('slide-step'); break;
-      case 'elementClick':
-      case 'element-click': {
+      case 'elementClick': {
         if (ev.id) {
           postToSlide({ type: 'element-click', id: ev.id });
         } else {
