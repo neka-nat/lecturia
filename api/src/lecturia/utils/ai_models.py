@@ -1,4 +1,4 @@
 AI_MODELS = {
-    "claude-default": "claude-sonnet-4-5-20250929",
-    "gemini-default": "gemini-3-flash-preview",
+    "claude-default": "claude-opus-4-6",
+    "gemini-default": "gemini-3.1-flash-lite-preview",
 }

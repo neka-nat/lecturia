@@ -6,6 +6,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
+from .database import init_db
 from .router import router
 
 app = FastAPI()
@@ -26,6 +27,11 @@ app.add_middleware(
 )
 
 app.include_router(router, prefix="/api")
+
+
+@app.on_event("startup")
+def on_startup() -> None:
+    init_db()
 
 if os.getenv("STORAGE_EMULATOR_HOST"):
     BASE_URL = f"http://localhost:4443/storage/v1/b/{os.getenv('GOOGLE_CLOUD_STORAGE_PUBLIC_BUCKET_NAME')}/o"

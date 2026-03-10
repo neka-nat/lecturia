@@ -18,14 +18,14 @@ resource "google_service_account" "worker" {
 # 必要最低限の IAM 権限
 locals {
   roles_app = [
-    "roles/datastore.user",
+    "roles/cloudsql.client",
     "roles/secretmanager.secretAccessor",
     "roles/storage.objectViewer",
     "roles/cloudtasks.enqueuer",
     "roles/artifactregistry.reader",
   ]
   roles_worker = [
-    "roles/datastore.user",
+    "roles/cloudsql.client",
     "roles/secretmanager.secretAccessor",
     "roles/storage.objectAdmin",
     "roles/artifactregistry.reader",
@@ -47,5 +47,5 @@ resource "google_project_iam_member" "worker_roles" {
   member   = "serviceAccount:${google_service_account.worker.email}"
 }
 
-output "app_sa_email"    { value = google_service_account.app.email }
+output "app_sa_email" { value = google_service_account.app.email }
 output "worker_sa_email" { value = google_service_account.worker.email }

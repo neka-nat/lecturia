@@ -1,5 +1,20 @@
 version: "3"
 services:
+  postgres:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=lecturia
+      - POSTGRES_USER=lecturia
+      - POSTGRES_PASSWORD=lecturia
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
   gcs:
     image: fsouza/fake-gcs-server
     ports:
@@ -15,29 +30,6 @@ services:
       - "${TASKS_PORT:-8123}:8123"
     environment:
       APP_ENGINE_EMULATOR_HOST: http://localhost:8080
-  firestore:
-    build:
-      context: .
-      dockerfile: Dockerfile.firebase
-      args:
-        FIREBASE_VERSION: 13.3.0
-    container_name: firestore-emulator
-    command: [
-      "firebase","emulators:start",
-      "--project=${GOOGLE_CLOUD_PROJECT}",
-      "--only","firestore",
-      "--import=/srv/firebase/data",
-      "--export-on-exit"
-    ]
-    environment:
-      - FIRESTORE_EMULATOR_HOST=0.0.0.0:8002
-      - FIREBASE_PROJECT=${GOOGLE_CLOUD_PROJECT}
-      - GCLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
-    ports:
-      - "4000:4000"   # Emulator UI
-      - "8002:8002"   # Firestore
-    volumes:
-      - firestore_data:/srv/firebase/data:rw
   lecturia:
     build:
       context: .
@@ -48,15 +40,15 @@ services:
     volumes:
       - .:/app
     environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql+psycopg://lecturia:lecturia@postgres:5432/lecturia}
       - STORAGE_EMULATOR_HOST=http://gcs:4443
       - LECTURIA_WORKER_URL=http://worker:8001
-      - FIRESTORE_EMULATOR_HOST=firestore:8002
     env_file:
       - .env
     depends_on:
+      - postgres
       - gcs
       - gcloud-tasks-emulator
-      - firestore
   worker:
     image: lecturia:latest
     command: ["fastapi", "run", "src/lecturia/cloud_pipeline/workflow.py", "--host", "0.0.0.0", "--port", "8001"]
@@ -65,9 +57,12 @@ services:
     volumes:
       - .:/app
     environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql+psycopg://lecturia:lecturia@postgres:5432/lecturia}
       - STORAGE_EMULATOR_HOST=http://gcs:4443
-      - FIRESTORE_EMULATOR_HOST=firestore:8002
     env_file:
       - .env
+    depends_on:
+      - postgres
+      - gcs
 volumes:
-  firestore_data:
+  postgres_data:

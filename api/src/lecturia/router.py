@@ -12,6 +12,16 @@ from google.protobuf import duration_pb2
 from loguru import logger
 from pydantic import BaseModel
 
+from .database import session_scope
+from .db_models import TaskStatusResponse
+from .lecture_repository import (
+    get_lecture,
+    list_active_lectures,
+    load_movie_config,
+    mark_lecture_deleted,
+    to_task_status_response,
+    upsert_lecture,
+)
 from .models import Manifest, MovieConfig
 from .storage import (
     count_public_bucket,
@@ -20,7 +30,6 @@ from .storage import (
     is_exists_in_public_bucket,
     get_public_storage_url,
 )
-from .firestore import TaskStatus, get_all_active_status, get_status, upsert_status
 
 
 class LectureInfo(BaseModel):
@@ -39,40 +48,31 @@ router = fastapi.APIRouter()
 @router.get("/lectures")
 async def list_lectures() -> list[LectureInfo]:
     lecture_infos: list[LectureInfo] = []
-    status_list = get_all_active_status()
-    for task_status in status_list:
-        lecture_id = task_status.id
+    with session_scope() as session:
+        lecture_records = list_active_lectures(session)
+
+    for lecture in lecture_records:
+        lecture_id = lecture.id
         # Determine lecture status
-        lecture_status = task_status.status
-        created_at = task_status.created_at.strftime("%Y-%m-%d %H:%M:%S")
-        progress = task_status.progress_percentage
-        phase = task_status.current_phase
+        lecture_status = lecture.status
+        created_at = lecture.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        progress = lecture.progress_percentage
+        phase = lecture.current_phase
         has_events = is_exists_in_public_bucket(f"lectures/{lecture_id}/events.json")
-        if (task_status.status == "completed" and not has_events) \
-            or task_status.status not in ("pending", "running", "completed", "failed"):
+        if (lecture.status == "completed" and not has_events) \
+            or lecture.status not in ("pending", "running", "completed", "failed"):
             logger.warning(f"Inconsistent lecture data: {lecture_id}")
             lecture_status = "failed"
 
-        json_str = download_data_from_public_bucket(f"lectures/{lecture_id}/movie_config.json")
-        if json_str is None:
-            lecture_infos.append(LectureInfo(
-                id=lecture_id,
-                topic="待機中..." if lecture_status == "pending" else "無題",
-                detail="待機中..." if lecture_status == "pending" else "",
-                created_at="",
-                status=lecture_status,
-            ))
-        else:
-            movie_config = MovieConfig.model_validate_json(json_str)
-            lecture_infos.append(LectureInfo(
-                id=lecture_id,
-                topic=movie_config.topic,
-                detail=movie_config.detail,
-                created_at=created_at,
-                status=lecture_status,
-                progress_percentage=progress,
-                current_phase=phase,
-            ))
+        lecture_infos.append(LectureInfo(
+            id=lecture_id,
+            topic=lecture.topic,
+            detail=lecture.detail,
+            created_at=created_at,
+            status=lecture_status,
+            progress_percentage=progress,
+            current_phase=phase,
+        ))
     return lecture_infos
 
 
@@ -105,11 +105,12 @@ async def get_lecture_manifest(lecture_id: str) -> Manifest:
 
 
 @router.get("/tasks/{task_id}/status")
-async def get_task_status(task_id: str) -> TaskStatus:
-    task_status = get_status(task_id)
-    if task_status is None:
+async def get_task_status(task_id: str) -> TaskStatusResponse:
+    with session_scope() as session:
+        lecture = get_lecture(session, task_id)
+    if lecture is None or lecture.deleted_at is not None:
         raise fastapi.HTTPException(status_code=404, detail="Task not found")
-    return task_status
+    return to_task_status_response(lecture)
 
 
 async def _create_lecture_task(lecture_id: str, config: MovieConfig) -> dict[str, str]:
@@ -139,9 +140,27 @@ async def _create_lecture_task(lecture_id: str, config: MovieConfig) -> dict[str
 async def create_lecture(config: MovieConfig = Body(...)):
     logger.info(f"Creating lecture: {config}")
     lecture_id = str(uuid.uuid4())
-    # Initialize task status in Firestore
-    upsert_status(lecture_id, "pending")
-    return await _create_lecture_task(lecture_id, config)
+    with session_scope() as session:
+        upsert_lecture(
+            session,
+            lecture_id,
+            "pending",
+            config=config,
+            progress_percentage=0,
+            current_phase="待機中",
+        )
+    try:
+        return await _create_lecture_task(lecture_id, config)
+    except Exception as exc:
+        with session_scope() as session:
+            upsert_lecture(
+                session,
+                lecture_id,
+                "failed",
+                error=str(exc),
+                current_phase="キュー投入エラー",
+            )
+        raise
 
 
 @router.post("/lectures/{lecture_id}/regenerate")
@@ -151,26 +170,40 @@ async def regenerate_lecture(lecture_id: str):
     """
     logger.info(f"Regenerating lecture: {lecture_id}")
 
-    # Get original movie config
-    json_str = download_data_from_public_bucket(f"lectures/{lecture_id}/movie_config.json")
-    if json_str is None:
-        raise fastapi.HTTPException(status_code=404, detail="Original lecture config not found")
-    config = MovieConfig.model_validate_json(json_str)
-
-    # Reset task status to pending
-    current_status = get_status(lecture_id)
-    if current_status is None:
-        raise fastapi.HTTPException(status_code=404, detail="Task not found")
-    if current_status.status == "completed":
-        raise fastapi.HTTPException(status_code=400, detail="Lecture is already completed")
-    if current_status.status in ("pending", "running"):
-        raise fastapi.HTTPException(status_code=400, detail="Lecture is already running")
-    upsert_status(lecture_id, "pending")
-    return await _create_lecture_task(lecture_id, config)
+    with session_scope() as session:
+        lecture = get_lecture(session, lecture_id)
+        if lecture is None or lecture.deleted_at is not None:
+            raise fastapi.HTTPException(status_code=404, detail="Task not found")
+        if lecture.status == "completed":
+            raise fastapi.HTTPException(status_code=400, detail="Lecture is already completed")
+        if lecture.status in ("pending", "running"):
+            raise fastapi.HTTPException(status_code=400, detail="Lecture is already running")
+        config = load_movie_config(lecture)
+        upsert_lecture(
+            session,
+            lecture_id,
+            "pending",
+            error=None,
+            progress_percentage=0,
+            current_phase="待機中",
+        )
+    try:
+        return await _create_lecture_task(lecture_id, config)
+    except Exception as exc:
+        with session_scope() as session:
+            upsert_lecture(
+                session,
+                lecture_id,
+                "failed",
+                error=str(exc),
+                current_phase="キュー投入エラー",
+            )
+        raise
 
 
 @router.delete("/lectures/{lecture_id}")
 async def delete_lecture(lecture_id: str):
     delete_data_from_public_bucket(f"lectures/{lecture_id}")
-    upsert_status(lecture_id, "deleted")
+    with session_scope() as session:
+        mark_lecture_deleted(session, lecture_id)
     return {"message": "Lecture deleted"}

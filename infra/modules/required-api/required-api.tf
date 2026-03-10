@@ -5,7 +5,7 @@ resource "google_project_service" "required_apis" {
     "cloudbuild.googleapis.com",
     "secretmanager.googleapis.com",
     "storage.googleapis.com",
-    "firestore.googleapis.com",
+    "sqladmin.googleapis.com",
     "cloudtasks.googleapis.com",
     "iamcredentials.googleapis.com",
     "aiplatform.googleapis.com",

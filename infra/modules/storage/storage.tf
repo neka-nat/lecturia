@@ -1,7 +1,7 @@
 variable "gcp_project_id" {}
 variable "bucket_name" {}
 variable "primary_region" {}
-variable "public_read" {          # 読み取り公開／非公開フラグ
+variable "public_read" { # 読み取り公開／非公開フラグ
   type    = bool
   default = true
 }
@@ -15,22 +15,22 @@ variable "writer_sa_email" {
 variable "required_apis" {}
 
 resource "google_storage_bucket" "public" {
-  name          = var.bucket_name
-  project       = var.gcp_project_id
-  location      = var.primary_region
+  name                        = var.bucket_name
+  project                     = var.gcp_project_id
+  location                    = var.primary_region
   uniform_bucket_level_access = true
-  force_destroy = true          # ステージ環境なら true
+  force_destroy               = true # ステージ環境なら true
   cors {
     origin          = var.cors_allowed_origins
     method          = ["GET", "HEAD", "OPTIONS"]
     response_header = ["Content-Type", "Content-Range", "Range"]
     max_age_seconds = 3600
   }
-  depends_on    = [var.required_apis]
+  depends_on = [var.required_apis]
 }
 
 resource "google_storage_bucket_iam_member" "all_users_reader" {
-  count  = var.public_read ? 1 : 0   # true なら 1 件作成、false なら 0 件
+  count  = var.public_read ? 1 : 0 # true なら 1 件作成、false なら 0 件
   bucket = google_storage_bucket.public.name
   role   = "roles/storage.objectViewer"
   member = "allUsers"

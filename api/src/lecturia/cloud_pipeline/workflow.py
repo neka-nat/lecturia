@@ -12,16 +12,43 @@ from ..chains.quiz_generator import create_quiz_generator_chain
 from ..chains.slide_maker import HtmlSlide, create_slide_maker_chain
 from ..chains.slide_to_script import Script, ScriptList, create_slide_to_script_chain
 from ..chains.tts import Talk, create_tts_chain
+from ..database import init_db, session_scope
 from ..chains.event_extractor import create_event_extractor_chain
+from ..lecture_repository import upsert_lecture
 from ..slide_editor import edit_slide
 from ..utils.intervals import rewrite_talk_with_intervaltree
 from ..utils.media import remove_long_silence, detect_nonsilent_ranges
 from ..models import MovieConfig, EventList, Event, QuizSectionList
 from ..storage import is_exists_in_public_bucket, download_data_from_public_bucket, upload_data_to_public_bucket
-from ..firestore import upsert_status
 from ..utils.async_tools import gather_limited
 
 app = FastAPI()
+
+
+@app.on_event("startup")
+def on_startup() -> None:
+    init_db()
+
+
+def _set_lecture_status(
+    lecture_id: str,
+    status: str,
+    *,
+    error: str | None = None,
+    progress_percentage: int | None = None,
+    current_phase: str | None = None,
+) -> None:
+    with session_scope() as session:
+        lecture = upsert_lecture(
+            session,
+            lecture_id,
+            status,
+            error=error,
+            progress_percentage=progress_percentage,
+            current_phase=current_phase,
+        )
+    if lecture is None:
+        logger.error("Lecture not found when updating status: {}", lecture_id)
 
 
 def _modify_events_by_check_silence(ev: EventList, audio_file: Path) -> EventList:
@@ -223,7 +250,7 @@ async def health():
 
 @app.post("/tasks/create-lecture")
 async def create_lecture(lecture_id: str, config: MovieConfig = Body(...)):
-    upsert_status(lecture_id, "running", progress_percentage=0, current_phase="初期化中")
+    _set_lecture_status(lecture_id, "running", progress_percentage=0, current_phase="初期化中")
     try:
         speaker_left_right_map = {
             speaker.name: "right" if i == 0 else "left" for i, speaker in enumerate(config.speakers)
@@ -248,25 +275,25 @@ async def create_lecture(lecture_id: str, config: MovieConfig = Body(...)):
         )
 
         # Phase 1: Create slides (25% progress)
-        upsert_status(lecture_id, "running", progress_percentage=10, current_phase="スライド生成中")
+        _set_lecture_status(lecture_id, "running", progress_percentage=10, current_phase="スライド生成中")
         result_slide = _create_slide_phase(lecture_id, config)
 
         # Phase 2: Create script (50% progress)
-        upsert_status(lecture_id, "running", progress_percentage=25, current_phase="スクリプト作成中")
+        _set_lecture_status(lecture_id, "running", progress_percentage=25, current_phase="スクリプト作成中")
         result_script = _create_script_phase(lecture_id, config, result_slide)
 
         # Phase 3: Create quiz (60% progress)
-        upsert_status(lecture_id, "running", progress_percentage=60, current_phase="クイズ作成中")
+        _set_lecture_status(lecture_id, "running", progress_percentage=60, current_phase="クイズ作成中")
         result_quiz_task = _create_quiz_phase(lecture_id, result_slide)
 
         # Phase 4: Generate audio (75% progress)
-        upsert_status(lecture_id, "running", progress_percentage=50, current_phase="音声生成中")
+        _set_lecture_status(lecture_id, "running", progress_percentage=50, current_phase="音声生成中")
         temp_dir = tempfile.mkdtemp()
         audio_files, slide_page_event_sec = await _generate_audio_phase(lecture_id, config, result_script, temp_dir)
 
         # Phase 5: Create events (90% progress)
         result_quiz = await result_quiz_task
-        upsert_status(lecture_id, "running", progress_percentage=75, current_phase="イベント作成中")
+        _set_lecture_status(lecture_id, "running", progress_percentage=75, current_phase="イベント作成中")
         await _create_event_phase(
             lecture_id,
             result_slide,
@@ -278,11 +305,11 @@ async def create_lecture(lecture_id: str, config: MovieConfig = Body(...)):
         )
 
         # Cleanup and completion (100% progress)
-        upsert_status(lecture_id, "running", progress_percentage=95, current_phase="最終処理中")
+        _set_lecture_status(lecture_id, "running", progress_percentage=95, current_phase="最終処理中")
         shutil.rmtree(temp_dir)
-        upsert_status(lecture_id, "completed", progress_percentage=100, current_phase="完了")
+        _set_lecture_status(lecture_id, "completed", progress_percentage=100, current_phase="完了")
     except Exception as e:
         logger.error(f"Error creating lecture {lecture_id}: {str(e)}")
-        upsert_status(lecture_id, "failed", error=str(e), current_phase="エラー")
+        _set_lecture_status(lecture_id, "failed", error=str(e), current_phase="エラー")
         raise
     return {"lecture_id": lecture_id}

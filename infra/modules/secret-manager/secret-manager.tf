@@ -1,6 +1,6 @@
 variable "gcp_project_id" {}
 variable "secrets_file" {}
-variable "accessors" { default = [] }            # service-account emails
+variable "accessors" { default = [] } # service-account emails
 variable "required_apis" {}
 
 locals {
@@ -13,9 +13,9 @@ locals {
 }
 
 resource "google_secret_manager_secret" "this" {
-  for_each   = local.secrets
-  project    = var.gcp_project_id
-  secret_id  = each.key
+  for_each  = local.secrets
+  project   = var.gcp_project_id
+  secret_id = each.key
   replication {
     auto {}
   }
@@ -30,13 +30,16 @@ resource "google_secret_manager_secret_version" "this" {
 
 resource "google_secret_manager_secret_iam_member" "accessor" {
   for_each = {
-    for sa in var.accessors :
-    sa => sa
+    for pair in setproduct(keys(local.secrets), var.accessors) :
+    "${pair[0]}:${pair[1]}" => {
+      secret_key = pair[0]
+      accessor   = pair[1]
+    }
   }
   project    = var.gcp_project_id
-  secret_id  = google_secret_manager_secret.this["ANTHROPIC_API_KEY"].secret_id
+  secret_id  = google_secret_manager_secret.this[each.value.secret_key].secret_id
   role       = "roles/secretmanager.secretAccessor"
-  member     = "serviceAccount:${each.value}"
+  member     = "serviceAccount:${each.value.accessor}"
   depends_on = [google_secret_manager_secret.this]
 }
 
@@ -45,8 +48,15 @@ output "secrets" {
   value = {
     for k, v in google_secret_manager_secret.this :
     k => {
-      name    = v.name
-      version = google_secret_manager_secret_version.this[k].name
+      id        = v.id
+      name      = v.name
+      secret_id = v.secret_id
+      version   = tostring(google_secret_manager_secret_version.this[k].version)
     }
   }
+}
+
+output "secret_values" {
+  value     = local.secrets
+  sensitive = true
 }

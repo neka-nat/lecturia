@@ -2,7 +2,7 @@ import tempfile
 from pathlib import Path
 
 import numpy as np
-from langchain.callbacks.tracers import ConsoleCallbackHandler
+from langchain_core.tracers.stdout import ConsoleCallbackHandler
 from loguru import logger
 from moviepy.editor import AudioFileClip, ImageSequenceClip
 from pydub import AudioSegment

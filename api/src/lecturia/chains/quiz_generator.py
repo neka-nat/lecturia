@@ -3,9 +3,9 @@ import re
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_google_vertexai import ChatVertexAI
+from langchain_core.messages import AIMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain_core.runnables import Runnable
-from langchain.messages import SystemMessage, AIMessage
 
 from ..models import QuizSectionList
 from ..utils.ai_models import AI_MODELS

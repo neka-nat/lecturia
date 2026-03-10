@@ -5,8 +5,17 @@ variable "repository_url" {}
 variable "service_account_email" {}
 variable "command" { type = string }
 variable "args" { type = list(string) }
-variable "env"        { type = map(string) }
-variable "secret_env" { type = map(string) }
+variable "env" { type = map(string) }
+variable "secret_env" {
+  type = map(object({
+    secret  = string
+    version = string
+  }))
+}
+variable "cloud_sql_instances" {
+  type    = list(string)
+  default = []
+}
 variable "public_access" { type = bool }
 variable "required_apis" {}
 
@@ -33,27 +42,45 @@ resource "google_cloud_run_v2_service" "service" {
       dynamic "env" {
         for_each = var.secret_env
         content {
-          name      = env.key
+          name = env.key
           value_source {
             secret_key_ref {
-              secret  = split("/versions/", env.value)[0]
-              version = split("/versions/", env.value)[1]
+              secret  = env.value.secret
+              version = env.value.version
             }
           }
+        }
+      }
+
+      dynamic "volume_mounts" {
+        for_each = length(var.cloud_sql_instances) > 0 ? [1] : []
+        content {
+          name       = "cloudsql"
+          mount_path = "/cloudsql"
         }
       }
       resources {
         limits = {
           memory = "2Gi"
-          cpu    = "1000m"
+          cpu    = "1"
+        }
+      }
+    }
+
+    dynamic "volumes" {
+      for_each = length(var.cloud_sql_instances) > 0 ? [1] : []
+      content {
+        name = "cloudsql"
+        cloud_sql_instance {
+          instances = var.cloud_sql_instances
         }
       }
     }
   }
 
   traffic {
-    percent         = 100
-    type            = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
+    percent = 100
+    type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
   }
 
   depends_on = [var.required_apis]

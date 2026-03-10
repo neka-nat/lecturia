@@ -1,9 +1,9 @@
 import re
 
 from langchain_anthropic import ChatAnthropic
+from langchain_core.messages import AIMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain_core.runnables import Runnable
-from langchain.messages import SystemMessage, AIMessage
 from pydantic import BaseModel, Field
 
 from ..utils.ai_models import AI_MODELS
