@@ -10,7 +10,7 @@ from PIL import Image
 class ImageGenerator(Runnable):
     def __init__(self):
         self.client = genai.Client()
-        self.model = "gemini-2.0-flash-preview-image-generation"
+        self.model = "gemini-3.1-flash-image-preview"
         self.config = GenerateContentConfig(response_modalities=[Modality.TEXT, Modality.IMAGE])
 
     def invoke(self, prompt: str) -> list[Image.Image]:
